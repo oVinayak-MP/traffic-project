@@ -1,6 +1,6 @@
 <edges>
-  <edge from="1" id="1to5" to="5" />
-  <edge from="3" id="3to5" to="5" />
-  <edge from="5" id="5to4" to="4" />
-  <edge from="5" id="5to2" to="2" />
+  <edge from="1" id="1to5" to="5" numLanes="3" />
+  <edge from="3" id="3to5" to="5" numLanes="3" />
+  <edge from="5" id="5to4" to="4" numLanes="3"  />
+  <edge from="5" id="5to2" to="2" numLanes="3"/>
 </edges>
