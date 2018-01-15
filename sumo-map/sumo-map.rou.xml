@@ -8,11 +8,25 @@
 
 
   <routeDistribution id="routedist1">
-    <route id="route0" edges="1to5 5to2" probability="0.25" color="0,255,255"/>
-    <route id="route1" edges="1to5 5to4" probability="0.25" color="0,255,255"/>
-    <route id="route2" edges="3to5 5to4" probability="0.25"  color="0,255,0"/>
-    <route id="route3" edges="3to5 5to2" probability="0.25"  color="0,255,0"/>
-  
+    <route id="route1_2" edges="1to5 5to2r" probability="0.25" color="0,255,255"/>
+    <route id="route1_4" edges="1to5 5to4r" probability="0.25" color="0,255,255"/>
+     <route id="route1_3" edges="1to5 5to3r" probability="0.25" color="0,255,255"/>
+
+
+     <route id="route3_4" edges="3to5 5to4r" probability="0.25"  color="0,255,0"/>
+    <route id="route3_2" edges="3to5 5to2r" probability="0.25"  color="0,255,0"/>
+    <route id="route3_1" edges="3to5 5to1r" probability="0.25" color="0,255,255"/>
+
+       <route id="route2_4" edges="2to5 5to4r" probability="0.25"  color="0,255,0"/>
+    <route id="route2_3" edges="2to5 5to3r" probability="0.25"  color="0,255,0"/>
+   <route id="route2_1" edges="2to5 5to1r" probability="0.25" color="0,255,255"/>
+
+
+      <route id="route4_3" edges="4to5 5to3r" probability="0.25"  color="0,255,0"/>
+    <route id="route4_2" edges="4to5 5to2r" probability="0.25"  color="0,255,0"/>
+   <route id="route4_1" edges="4to5 5to1r" probability="0.25" color="0,255,255"/>
+
+
   </routeDistribution>
   <flow depart="1" id="veh0" route="routedist1" type="typedist1" begin="0" period="10" end="7200" />
   <flow depart="1" id="veh2" route="routedist1" type="typedist1" begin="0" period="10" end="7200" />
