@@ -1,4 +1,4 @@
-def getSpeedandPosition(traci,laneid,avgvl,maxspeed,debug): #This function returns speed and position for the give lane it also should contains average vehicle length
+def getSpeedandPosition(traci,laneid,avgvl,maxspeed,debug): #This function returns speed and position for the give lane it also should contains average vehicle length maxspeed and debug
     lanepos=[0]*100
     lanespeed=[0]*100
     
