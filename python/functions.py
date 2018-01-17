@@ -1,9 +1,9 @@
 def getSpeedandPosition(traci,laneid,avgvl,maxspeed,debug): #This function returns speed and position for the give lane it also should contains average vehicle length maxspeed and debug
-    lanepos=[0]*100
+    lanepos=[0]*100   #can be calculated from lane length and avgerage vehicle length
     lanespeed=[0]*100
     
     for id in traci.lane.getLastStepVehicleIDs(laneid):
-        speed=traci.vehicle.getSpeed(id)
+
         pos=traci.vehicle.getLanePosition(id)
         pos=int(pos/avgvl)
         
