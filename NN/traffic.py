@@ -30,7 +30,7 @@ class DQNAgent:
         error = prediction - target
         return K.mean(K.sqrt(1+K.square(error))-1, axis=-1)
 
-   ''' def _build_model(self):
+        ''' def _build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
@@ -44,7 +44,7 @@ class DQNAgent:
 		
 	model = Sequential()
 	model.add(Conv2D(16, kernel_size=(4, 4), strides=(2, 2), #First layer
-                 activation='relu',	#Change activation function to nonlinear
+                 activation='sigmoid',	#Change activation function to nonlinear
                  input_shape=input_shape))
 	model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))	#Not sure
 	model.add(Conv2D(32, (2, 2), activation='relu'))
