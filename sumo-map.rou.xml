@@ -1,0 +1,34 @@
+<routes>
+  <vType accel="1.0" decel="5.0" id="Car" length="2.0" maxSpeed="100.0" sigma="0.0" />
+
+  <vTypeDistribution id="typedist1">
+    <vType id="type1" accel="0.8" length="5" maxSpeed="70" probability="0.9"/>
+        <vType id="type2" accel="1.8" length="15" maxSpeed="50" probability="0.1"/>
+  </vTypeDistribution>
+
+
+  <routeDistribution id="routedist1">
+    <route id="route1_2" edges="1to5 5to2r" probability="0.25" color="0,255,0"/>
+    <route id="route1_4" edges="1to5 5to4r" probability="0.25" color="255,0,0"/>
+     <route id="route1_3" edges="1to5 5to3r" probability="0.25" color="0,0,255"/>
+
+
+     <route id="route3_4" edges="3to5 5to4r" probability="0.25"  color="0,255,255"/>
+    <route id="route3_2" edges="3to5 5to2r" probability="0.25"  color="255,255,0"/>
+    <route id="route3_1" edges="3to5 5to1r" probability="0.25" color="255,0,255"/>
+
+       <route id="route2_4" edges="2to5 5to4r" probability="0.25"  color="128,0,0"/>
+    <route id="route2_3" edges="2to5 5to3r" probability="0.25"  color="0,128,0"/>
+   <route id="route2_1" edges="2to5 5to1r" probability="0.25" color="0,0,128"/>
+
+
+      <route id="route4_3" edges="4to5 5to3r" probability="0.25"  color="0,255,0"/>
+    <route id="route4_2" edges="4to5 5to2r" probability="0.25"  color="0,255,0"/>
+   <route id="route4_1" edges="4to5 5to1r" probability="0.25" color="0,255,255"/>
+
+
+  </routeDistribution>
+  <flow depart="1" id="veh0" route="routedist1" type="typedist1" begin="0" period="10" end="7200" />
+  <flow depart="1" id="veh2" route="routedist1" type="typedist1" begin="0" period="10" end="7200" />
+  
+</routes>
