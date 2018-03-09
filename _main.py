@@ -9,38 +9,39 @@ import traci
 from tqdm import tqdm
 import random
 from time import time
+pos1=33
+pos2=48
+actid=[]
 def getSpeedandPosition(traci,laneid,avgvl,maxspeed,debug): #This function returns speed and position for the give lane it also should contains average vehicle length maxspeed and debug
     lanepos=[0]*100   #can be calculated from lane length and avgerage vehicle length
     lanespeed=[0]*100
-    
+   
     for id in traci.lane.getLastStepVehicleIDs(laneid):
-
+	
         pos=traci.vehicle.getLanePosition(id)
         pos=int(pos/avgvl)
-        
         lanepos[pos]=1
         lanespeed[pos]=traci.vehicle.getSpeed(id)
         
         if (debug == 1):
                 print "index:" + str(pos)
-                print "speed:" + str(lanespeed[pos])
-                
+                print "speed:" + str(lanespeed[pos])    
         
     lanespeed[:]=[round(x/maxspeed,2) for x in lanespeed]
     return lanespeed,lanepos
 cmd = ['sumo-gui', '-c','sumo-map.sumocfg','--waiting-time-memory','10','-e','500']
 #['rGrG','ryry','GrGr','yryr']
 actions = [
-"yrrrrrrrGrrrrrrr",
-"Gyrrrrrrrrrrrrrr",
-"rGyrrrrrrrrrrrrr",
-"rrGyrrrrrrrrrrrr",
-"rrrGyyrrrrGyrrrr",
-"rrrrGGrrrGrGyrrr",
-"rrrrrrGrrrrrGyrr",
-"rrrrrrrGrrrrrGyr",
-"rrrrrrrryrrrrrGr",
-"rrrrrrrrGrrrrrrG",]
+"yrrrrrrrrrrrrrGG",
+"rrrrrrrrrrrrGGrr",
+"GGyrrrrrrrrrrrrr",
+"rGGyyrrrrrrrrrrr",
+"rrrGGyyrrrrrrrrr",
+"rrrrrGGyrrrrrrrr",
+"rrrrrrGGyrrrrrrr",
+"rrrrrrrGGyrrrrrr",
+"rrrrrrrrGGyyrrrr",
+"rrrrrrrrrrGGrrrr",]
 def random_action():
 	f = random.choice(actions)
 	print "\naction chosen \n"
@@ -50,7 +51,7 @@ def _cumulated_wt():
 	cwt=0
 	c=0
 	for id in traci.vehicle.getIDList():
-		cwt+=traci.vehicle.getAccumulatedWaitingTime(id)
+		cwt+=traci.vehicle.getWaitingTime(id)	#traci.vehicle.getAccumulatedWaitingTime(id)
 		c+=traci.vehicle.getWaitingTime(id)
 	print "wt:"+str(c)
 	return cwt
@@ -101,6 +102,7 @@ for i in tqdm(range(5)):
 			reward = cwt1-cwt2
 			print "\n Reward for the action is " + str(reward)
 			print "\n earlier : "+str(cwt1)+"now : "+str(cwt2)
+			
 			
 	traci.close()
 time_end = time()

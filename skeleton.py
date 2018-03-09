@@ -108,9 +108,7 @@ class DQNAgent:
         self.model.save_weights(name)
 
 
-nv, c = 12, 4;		#nv=no vehicles in a lane ,c = no:oflanes
-speedmatrix = [[0 for x in range(nv)] for y in range(c)] 
-posmatrix=	[[0 for x in range(nv)] for y in range(c)]
+
 
 #######calculate immediate reward from cumulative delay####
 def reward():
