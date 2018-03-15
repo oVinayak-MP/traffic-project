@@ -1,4 +1,5 @@
 import random
+import gym
 import numpy as np
 from collections import deque
 from keras.models import Sequential
@@ -6,21 +7,9 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras import backend as K
 
-import os, sys
-if 'SUMO_HOME' in os.environ:
-     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-     sys.path.append(tools)
-else:   
-     sys.exit("please declare environment variable 'SUMO_HOME'")
-import traci
-from tqdm import tqdm
-import random
-from time import time
 EPISODES = 5000
 
-cmd = ['sumo-gui', '-c', 'sumo-map.sumocfg','--waiting-time-memory','10','-e','500']
 
-'''
 class DQNAgent:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
@@ -43,7 +32,7 @@ class DQNAgent:
 	
 
 		
-	
+	'''
 	posnet = Sequential()
 	posnet.add(Conv2D(16, kernel_size=(4, 4), strides=(2, 2), #First layer
                  activation='relu',	#Change activation function to nonlinear
@@ -75,14 +64,14 @@ class DQNAgent:
   def _build_model(self):
         # Neural Net for Deep-Q learning Model
         posnet = Sequential()
-			posnet.add(Convolution2D(16, 4, 4, activation='relu', input_shape=(1,lane_length,lane_width)))
+				posnet.add(Convolution2D(16, 4, 4, activation='relu', input_shape=(1,lane_length,lane_width)))
 
        # posnet.add(Dense(24, input_dim=self.state_size, activation='relu'))
         posnet.add(Dense(24, activation='relu'))
         model.add(Dense(self.action_size, activation='relu'))
         model.compile(loss=self._huber_loss,optimizer=Adam(lr=self.learning_rate))
         return model
-
+'''
 
 
     def update_target_model(self):
@@ -119,11 +108,13 @@ class DQNAgent:
         self.model.save_weights(name)
 
 
-
+nv, c = 12, 4;		#nv=no vehicles in a lane ,c = no:oflanes
+speedmatrix = [[0 for x in range(nv)] for y in range(c)] 
+posmatrix=	[[0 for x in range(nv)] for y in range(c)]
 
 #######calculate immediate reward from cumulative delay####
 def reward():
-	return 0
+
 #############end of reward calculation function#########################
 
 ########action=NSG,EWG,NSLG,EWLG######
@@ -139,81 +130,45 @@ def performaction(action):
 ###join pos and bool matrices to a type state and return
 def matricestostate():
 
-	return 0
 
 ##########end of matricestostate##############
 
 
-speedlimit=50 													##############whatever is the speed limit in correct units
-'''
-laneid=['1to5_0', '1to5_1', '1to5_2', '2to5_0', '2to5_1', '2to5_2', '3to5_0', '3to5_1', '3to5_2', '4to5_0', '4to5_1', '4to5_2']
+speedlimit=50 																		##############whatever is the speed limit in correct units
 def currentstatetomatrix():
-	avgvl=5
-	p=0
-	for id in traci.lane.getLastStepVehicleIDs(laneid):
-			pos=traci.vehicle.getLanePosition(id)
-			colIndex=int(pos/avgvl)
-			'''if road=="w2e_s":
-				rowIndex=0;
-			elif road=="e2w_s":
-				rowIndex=4;		
-			elif road=="s2n_s":
-				rowIndex=8;
-			elif road=="n2s_s":
-				rowIndex=12;
-			rowIndex+=lane		
-			P[lane][colIndex]=1
-			V[lane][colIndex]=speed=traci.vehicle.getSpeed(id)  '''
-			print "index:" + str(pos)
-			print "speed:" + str(pos)
-			p=pos
-	return p
 
+	for id in traci.vehicle.getIDList():
+			
+			    pos =  traci.vehicle.getPosition(id)[1]-251
+			    #n1 = int((400-250)/traci.vehicle.getLength(id))
+			    indexpos = int(pos/traci.vehicle.getLength(id))
+			    lane=traci.vehicle.getLaneID(id)
+			    if indexpos<12:
+				    if 		(lane =="n_0_0"):
+				    	north[indexpos][0]=1
+					    northSpeed[n2][0]= traci.vehicle.getSpeed(id)/speedlimit
+						else if (lane =="xxxxx"):	###############################lane id	for next lane
+							north[indexpos][1]=1
+							northSpeed[n2][0]= traci.vehicle.getSpeed(id)/speedlimit
+						else if (lane =="xxxxx"):	###############################lane id	for next lane
+							north[indexpos][2]=1
+							northSpeed[indexpos][0]= traci.vehicle.getSpeed(id)/speedlimit
+						else if (lane =="xxxxx"):	###############################lane id	for next lane
+							north[indexpos][3]=1
+							northSpeed[indexpos][0]= traci.vehicle.getSpeed(id)/speedlimit
 
-'''actions = [
-"GGGGgrrrrrGGGGgrrrrr",
-"yyyygrrrrryyyygrrrrr",
-"rrrrGrrrrrrrrrGrrrrr",
-"rrrryrrrrrrrrryrrrrr",
-"rrrrrGGGGgrrrrrGGGGg",
-"rrrrryyyygrrrrryyyyg",
-"rrrrrrrrrGrrrrrrrrrG",
-"rrrrrrrrryrrrrrrrrry",
-]'''
-actions = [
-"yrrrrrrrGrrrrrrr",
-"Gyrrrrrrrrrrrrrr",
-"rGyrrrrrrrrrrrrr",
-"rrGyrrrrrrrrrrrr",
-"rrrGyyrrrrGyrrrr",
-"rrrrGGrrrGrGyrrr",
-"rrrrrrGrrrrrGyrr",
-"rrrrrrrGrrrrrGyr",
-"rrrrrrrryrrrrrGr",
-"rrrrrrrrGrrrrrrG",]
-def random_action():
-	f = random.choice(actions)
-	print "\naction chosen \n"
-	print f
-	return f
 
 if __name__ == "__main__":
-	''' state_size = # state size understandable by cnn 2-d matrix?
+    state_size = # state size understandable by cnn 2-d matrix?
     action_size = 4 # NSG,EWG,NSLG,EWLG
     agent = DQNAgent(state_size, action_size)
 
     done = False
-    batch_size = 32 #use size in paper'''
+    batch_size = 32 #use size in paper
 
-	traci.start(cmd)	#start simulation
-	for i in tqdm(range(500)):		
-	   	pos=currentstatetomatrix()
-	   	print pos
-    	traci.trafficlights.setRedYellowGreenState("5", random_action())
-    	traci.simulationStep()
-	traci.close()
-	time_end = time()
-	''' for e in range(EPISODES):
+		traci.start(cmd)	#start simulation
+		
+    for e in range(EPISODES):
         traci.trafficlights.setRedYellowGreenState("0", random_action())
         currentstatetomatrix()
         state = matricestostate()
@@ -234,5 +189,4 @@ if __name__ == "__main__":
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
         # if e % 10 == 0:
-        #     agent.save("./save/cartpole-ddqn.h5"
-        '''
+        #     agent.save("./save/cartpole-ddqn.h5")
