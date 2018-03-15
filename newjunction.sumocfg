@@ -1,0 +1,6 @@
+<configuration>
+    <input>
+       <net-file value="newjunction.net.xml"/>
+       <route-files value="newjunction.rou.xml"/>
+    </input>
+</configuration>
