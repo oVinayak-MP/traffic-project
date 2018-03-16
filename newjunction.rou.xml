@@ -1,7 +1,73 @@
 <routes>
 	<vType id="stdType" accel="2.6" decel="4.5" sigma="0.5" length="5" maxSpeed="70"/>
 
-    <route id="route_we" edges="w2e_s w2e_d" departLane='w2e_s0' arrivalLane='w2e_d0'/>
-	<flow depart="1" id="flow_n_s" route="route_we" type="stdType" begin="0" end="5400" probability="0.2" />
+    <route id="route_06_1" edges="w2e_s w2e_d" departLane='w2e_s_1' arrivalLane='w2e_d_1'/>
+		<flow depart="1" id="flow_06_1" route="route_06_1" type="stdType" begin="0" end="5400" probability="0.2" />
+	<route id="route_06_2" edges="w2e_s w2e_d" departLane='w2e_s_2' arrivalLane='w2e_d_2'/>
+		<flow depart="1" id="flow_06_2" route="route_06_2" type="stdType" begin="0" end="5400" probability="0.2" />
+		
+		
+		
+	
+    <route id="route_07_1" edges="w2e_s n2s_d" departLane='w2e_s_0' arrivalLane='n2s_d_0'/>
+    	<flow depart="1" id="flow_07_1" route="route_07_1" type="stdType" begin="0" end="5400" probability="0.5" />
+	<route id="route_07_2" edges="w2e_s n2s_d" departLane='w2e_s_0' arrivalLane='n2s_d_1'/>
+    	<flow depart="1" id="flow_07_2" route="route_07_2" type="stdType" begin="0" end="5400" probability="0.5" />	
+	<route id="route_07_3" edges="w2e_s n2s_d" departLane='w2e_s_0' arrivalLane='n2s_d_2'/>
+    	<flow depart="1" id="flow_07_3" route="route_07_3" type="stdType" begin="0" end="5400" probability="0.5" />
+	<route id="route_07_4" edges="w2e_s n2s_d" departLane='w2e_s_0' arrivalLane='n2s_d_3'/>
+    	<flow depart="1" id="flow_07_4" route="route_07_4" type="stdType" begin="0" end="5400" probability="0.5" />
+    	
+	
+	
 
+	<route id="route_24_1" edges="e2w_s e2w_d" departLane='e2w_s_1' arrivalLane='e2w_d_1'/>
+    	<flow depart="1" id="flow_24_1" route="route_24_1" type="stdType" begin="0" end="5400" probability="0.2" />    	
+   	<route id="route_24_2" edges="e2w_s e2w_d" departLane='e2w_s_2' arrivalLane='e2w_d_2'/>
+    	<flow depart="1" id="flow_24_2" route="route_24_2" type="stdType" begin="0" end="5400" probability="0.2" />
+
+
+
+
+    <route id="route_25_1" edges="e2w_s e2w_d" departLane='e2w_s_1' arrivalLane='e2w_d_1'/>
+    	<flow depart="1" id="flow_25_1" route="route_25_1" type="stdType" begin="0" end="5400" probability="0.5" />    	
+   	<route id="route_25_2" edges="e2w_s e2w_d" departLane='e2w_s_2' arrivalLane='e2w_d_2'/>
+    	<flow depart="1" id="flow_25_2" route="route_25_2" type="stdType" begin="0" end="5400" probability="0.5" /> 
+    	
+    
+    
+    <route id="route_35_1" edges="s2n_s s2n_d" departLane='s2n_s_1' arrivalLane='s2n_d_1'/>
+    	<flow depart="1" id="flow_35_1" route="route_35_1" type="stdType" begin="0" end="5400" probability="0.1" />    	
+   	<route id="route_35_2" edges="s2n_s s2n_d" departLane='s2n_s_2' arrivalLane='s2n_d_2'/>
+    	<flow depart="1" id="flow_35_2" route="route_35_2" type="stdType" begin="0" end="5400" probability="0.1" />
+    	    	
+
+
+	<route id="route_36_1" edges="s2n_s w2e_d" departLane='s2n_s_0' arrivalLane='w2e_d_0'/>
+    	<flow depart="1" id="flow_36_1" route="route_36_1" type="stdType" begin="0" end="5400" probability="0.1" />    	
+   	<route id="route_36_2" edges="s2n_s w2e_d" departLane='s2n_s_0' arrivalLane='w2e_d_1'/>
+    	<flow depart="1" id="flow_36_2" route="route_36_2" type="stdType" begin="0" end="5400" probability="0.1" />
+    <route id="route_36_3" edges="s2n_s w2e_d" departLane='s2n_s_0' arrivalLane='w2e_d_2'/>
+    	<flow depart="1" id="flow_36_3" route="route_36_3" type="stdType" begin="0" end="5400" probability="0.1" />    	
+   	<route id="route_36_4" edges="s2n_s w2e_d" departLane='s2n_s_0' arrivalLane='w2e_d_3'/>
+    	<flow depart="1" id="flow_36_4" route="route_36_4" type="stdType" begin="0" end="5400" probability="0.1" />	    		
+
+       	    	
+
+    <route id="route_17_1" edges="n2s_s n2s_d" departLane='n2s_s_1' arrivalLane='n2s_d_1'/>
+    	<flow depart="1" id="flow_17_1" route="route_25_1" type="stdType" begin="0" end="5400" probability="0.1" />    	
+   	<route id="route_17_2" edges="n2s_s n2s_d" departLane='n2s_s_2' arrivalLane='n2s_d_2'/>
+    	<flow depart="1" id="flow_17_2" route="route_25_2" type="stdType" begin="0" end="5400" probability="0.1" /> 
+
+	
+	
+	<route id="route_14_1" edges="n2s_s e2w_d" departLane='n2s_s_0' arrivalLane='e2w_d_0'/>
+    	<flow depart="1" id="flow_14_1" route="route_14_1" type="stdType" begin="0" end="5400" probability="0.5" />    	
+   	<route id="route_14_2" edges="n2s_s e2w_d" departLane='n2s_s_0' arrivalLane='e2w_d_1'/>
+    	<flow depart="1" id="flow_14_2" route="route_14_2" type="stdType" begin="0" end="5400" probability="0.5" />    
+	<route id="route_14_3" edges="n2s_s e2w_d" departLane='n2s_s_0' arrivalLane='e2w_d_2'/>
+    	<flow depart="1" id="flow_14_3" route="route_14_3" type="stdType" begin="0" end="5400" probability="0.5" />    
+	<route id="route_14_4" edges="n2s_s e2w_d" departLane='n2s_s_0' arrivalLane='e2w_d_3'/>
+    	<flow depart="1" id="flow_14_4" route="route_14_4" type="stdType" begin="0" end="5400" probability="0.5" />        	    	
+    			
 </routes>

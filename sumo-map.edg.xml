@@ -1,0 +1,12 @@
+<edges>
+  <edge from="1" id="1to5" to="5" numLanes="3" />
+   <edge from="5" id="5to1r" to="1" numLanes="1" />
+   <edge from="3" id="3to5" to="5" numLanes="3" />
+    <edge from="5" id="5to3r" to="3" numLanes="1" />
+
+    <edge from="5" id="5to4r" to="4" numLanes="1" />
+    <edge from="4" id="4to5" to="5" numLanes="3"  />
+     <edge from="5" id="5to2r" to="2" numLanes="1" />
+     <edge from="2" id="2to5" to="5" numLanes="3"/>
+      
+</edges>
