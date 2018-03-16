@@ -1,0 +1,7 @@
+<routes>
+	<vType id="stdType" accel="2.6" decel="4.5" sigma="0.5" length="5" maxSpeed="70"/>
+
+    <route id="route_we" edges="w2e_s w2e_d" departLane='w2e_s0' arrivalLane='w2e_d0'/>
+	<flow depart="1" id="flow_n_s" route="route_we" type="stdType" begin="0" end="5400" probability="0.2" />
+
+</routes>
