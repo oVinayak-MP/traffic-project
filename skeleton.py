@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from collections import deque
-from keras.models import Sequential,Model
+from keras.models import Sequential,Model,clone_model
 from keras.optimizers import Adam
 from keras.layers import Dense,Flatten,Concatenate,Input,concatenate
 from keras.layers.convolutional import Conv2D,MaxPooling2D
@@ -30,6 +30,7 @@ class DQNAgent:
   def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
+        self.debug=True
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95	#discount rate
         self.epsilon = 1.0	#exploration rate
@@ -37,7 +38,8 @@ class DQNAgent:
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
         self.model = self._build_model()
-        self.target_model = self._build_model()
+        #self.target_model = self._build_model()
+        self.target_model = self.model
         self.update_target_model()        
   def _huber_loss(self, target, prediction):
         # sqrt(1+error^2)-1
@@ -78,7 +80,7 @@ class DQNAgent:
 	
  
   def _build_model(self):
-        first_con_input = Input(shape=(16,20,1))    #size of matrix
+  	first_con_input = Input(shape=(16,20,1))    #size of matrix
         second_con_input = Input(shape=(16,20,1))   #size of matrix
         third_et_input = Input(shape=(20,))
         model1_1=Conv2D(16, kernel_size=(3, 3), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(first_con_input)
@@ -101,27 +103,34 @@ class DQNAgent:
         finalmodel=Dense(20, activation='softmax')(finalemodel_2) #output row and column
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=self.learning_rate),metrics=['accuracy'])
-        '''if self.debug == True:
-            print ("The network model")
-            final.summary()'''
+        #if  True:
+         #   print ("The network model")
+          #  final.summary()
+        model=final
         return final
 
-
+  
 
   def update_target_model(self):
         # copy weights from model to target_model
+        #print "update_target_model____________"
         self.target_model.set_weights(self.model.get_weights())
 
   def remember(self, state, action, reward, next_state, done):
+        #print "remember_______"
         self.memory.append((state, action, reward, next_state, done))
 
   def act(self, state):
+  	#print "Act____"
   	if np.random.rand() <= self.epsilon:
+  		print "Random Action"
   		return random.randrange(self.action_size)
   	act_values = self.model.predict(state)
+  	print "Action from Agent"
   	return np.argmax(act_values[0])  # returns action, check output form of cnn
 
   def replay(self, batch_size):
+  	#print "replay_____"
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
         
@@ -133,6 +142,7 @@ class DQNAgent:
                 t = self.target_model.predict(next_state)[0]
                 target[0][action] = reward + self.gamma * t[np.argmax(a)]
             self.model.fit(state, target, epochs=1, verbose=0)
+           # print "TRAINED_____"
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
@@ -150,6 +160,7 @@ class DQNAgent:
 oldTimeStamp=0
 elapsedTime=0 #initial arbitrary
 def Reward():
+	#print "reward____"
 	W=0
 	global elapsedTime
 	for lane in laneid:
@@ -159,7 +170,8 @@ def Reward():
 				W+=waitingTime
 			else:
 				W+=elapsedTime
-	return W
+	
+	return -W
 #############end of reward calculation function#########################
 
 def performAction(actionIndex):
@@ -210,8 +222,8 @@ row=	[3,2,1,0,
 	 7,6,5,4,
 	 11,10,9,8]	
 	 
-P = [[0 for x in range(21)] for y in range(17)]
-V = [[0 for x in range(21)] for y in range(17)]
+P = [[0 for x in range(20)] for y in range(16)]
+V = [[0 for x in range(20)] for y in range(16)]
 
 
 def currentStateToMatrix():
@@ -233,13 +245,13 @@ def currentStateToMatrix():
 
 actions = [
 "GGGGgrrrrrGGGGgrrrrr",
-"yyyygrrrrryyyygrrrrr",
+"rrrrrGGGGGrrrrrGGGGG",
 "rrrrGrrrrrrrrrGrrrrr",
-"rrrryrrrrrrrrryrrrrr",
+"grrrrrrGGrrrrrGrGGrr",
 "rrrrrGGGGgrrrrrGGGGg",
-"rrrrryyyygrrrrryyyyg",
-"rrrrrrrrrGrrrrrrrrrG",
-"rrrrrrrrryrrrrrrrrry",
+"rrGGrGrrrrGGrrrrrrrg",
+"GGrrrrrrrGrrrrrrGGGG",
+"rrrrrrrGGGrrGGGrrrrr",
 ]
 
 def printV():
@@ -279,17 +291,33 @@ if __name__ == "__main__":
 		traci.close()
 		time_end = time()'''
 		for e in range(EPISODES):
-				firstaction=randint(0,7)
+				firstaction=randrange(0, 7)
+				print firstaction
 				performAction(firstaction) #Initial Random Action 
-				matricesToState()     
-				state = {"input_1": np.array(P),"input_2":np.array(V),"input_3":actions[firstaction]}
+				matricesToState()    
+				inp1=np.expand_dims(np.expand_dims(np.array(P),axis=2),axis=0)
+				inp2=np.expand_dims(np.expand_dims(np.array(V),axis=2),axis=0) 
+				actionState=np.zeros((1,20))
+				actionState[0][firstaction]=1;
+				state = {'input_1':inp1,'input_2':inp2,'input_3':actionState}
 				for Time in range(500):   #time range?
+					
 					action = agent.act(state)
 					performAction(action)	
 					matricesToState()	  
-					actionState=[ 0 for x in range(8)]
-					actionState[action]=1     
-					next_state = {"input_1": np.array(P),"input_2":np.array(V),"input_3":np.array(actionState)}
+					actionState=np.zeros((1,20))
+					#print actionState.shape
+					inp1=np.expand_dims(np.expand_dims(np.array(P),axis=2),axis=0)
+					inp2=np.expand_dims(np.expand_dims(np.array(V),axis=2),axis=0)
+					#print actionState
+					actionState[0][action]=1
+					'''print inp1.shape
+					print inp2.shape
+					print inp1,
+					print inp2,'''
+					next_state = {'input_1':inp1,'input_2':inp2,'input_3':actionState}
+					
+					
 					reward=Reward()
           #reward = reward if not done else -10
 					done=0
@@ -299,7 +327,8 @@ if __name__ == "__main__":
                 agent.update_target_model()
                 print("episode: {}/{}, score: {}, e: {:.2}"
                       .format(e, EPISODES, time, agent.epsilon))
-                break'''
+                break'''		
+                			#print "agent.memory "+str(len(agent.memory))
 					if len(agent.memory) > batch_size:
 						agent.replay(batch_size)
 					# if e % 10 == 0:
