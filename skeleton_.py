@@ -82,7 +82,7 @@ class DQNAgent:
   def _build_model(self):
   	first_con_input = Input(shape=(16,20,1))    #size of matrix
         second_con_input = Input(shape=(16,20,1))   #size of matrix
-        third_et_input = Input(shape=(20,))
+        third_et_input = Input(shape=(4,))
         model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(first_con_input)
         model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(second_con_input)
         model1_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model1_1)	#
@@ -95,12 +95,12 @@ class DQNAgent:
         model2_5=Flatten()(model2_4)
         model1_6=Dense(256, activation='relu')(model1_5)
         model2_6=Dense(256, activation='relu')(model2_5)
-        model3_1=Dense(20, activation='relu')(third_et_input) #size of state
+        model3_1=Dense(4, activation='relu')(third_et_input) #size of state
         #model3_2=Flatten()(model3_1)  #not used
         tempmodel=concatenate([model1_6,model2_6])
         finalemodel_1=concatenate([tempmodel,model3_1],axis=1)
-        finalemodel_2=Dense(532, activation='relu')(finalemodel_1)
-        finalmodel=Dense(20, activation='softmax')(finalemodel_2) #output row and column
+        finalemodel_2=Dense(516, activation='relu')(finalemodel_1)
+        finalmodel=Dense(4, activation='softmax')(finalemodel_2) #output row and column
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=self.learning_rate),metrics=['accuracy'])
         #if  True:
@@ -245,26 +245,10 @@ def currentStateToMatrix():
 
 
 actions = [
-"gggrrrrrgggrgrrr",
-"grrrgrrrgrrrgggg",
+"gggrgrrrgggrgrrr",
+"grrrgggrgrrrgggr ",
 "grrggrrrgrrggrrr",
-"grrrgrrrgrrrgggg",
-"gggrrrrrgggrgrrr",
-"grrrgrrrgrrrgggg",
-"grrggrrrgrrggrrr",
-"grrrgrrrgrrrgggg",
-"gggrrrrrgggrgrrr",
-"grrrgrrrgrrrgggg",
-"grrggrrrgrrggrrr",
-"grrrgrrrgrrrgggg",
-"gggrrrrrgggrgrrr",
-"grrrgrrrgrrrgggg",
-"grrggrrrgrrggrrr",
-"grrrgrrrgrrrgggg",
-"gggrrrrrgggrgrrr",
-"grrrgrrrgrrrgggg",
-"grrggrrrgrrggrrr",
-"grrrgrrrgrrrgggg"
+"grrrgrrggrrrgrrg",
 ]
 
 def printV():
@@ -289,7 +273,7 @@ if __name__ == "__main__":
 		oldTimeStamp=0
 		elapsedTime=0 #initial arbitrary
 		state_size = 16# state size understandable by cnn 2-d matrix?
-		action_size = 20 # check sumo traffic light phases
+		action_size = 4 # check sumo traffic light phases
 		agent = DQNAgent(state_size, action_size)
 		done = False
 		batch_size = 32 #use size in paper
@@ -304,46 +288,46 @@ if __name__ == "__main__":
 		traci.close()
 		time_end = time()'''
 		for e in range(EPISODES):
-				firstaction=randrange(0, 19)
+				firstaction=randrange(0, 4)
 				print firstaction
 				performAction(firstaction) #Initial Random Action 
 				matricesToState()    
 				inp1=np.expand_dims(np.expand_dims(np.array(P),axis=2),axis=0)
 				inp2=np.expand_dims(np.expand_dims(np.array(V),axis=2),axis=0) 
-				actionState=np.zeros((1,20))
+				actionState=np.zeros((1,4))
 				actionState[0][firstaction]=1;
 				state = {'input_1':inp1,'input_2':inp2,'input_3':actionState}
-				for Time in range(500):   #time range?					
-					action = agent.act(state)
-					print "Action Index" +str(action)
-					performAction(action)	
-					matricesToState()	  
-					actionState=np.zeros((1,20))
-					#print actionState.shape
-					inp1=np.expand_dims(np.expand_dims(np.array(P),axis=2),axis=0)
-					inp2=np.expand_dims(np.expand_dims(np.array(V),axis=2),axis=0)
-					#print actionState
-					actionState[0][action]=1
-					next_state = {'input_1':inp1,'input_2':inp2,'input_3':actionState}
-					
-					
-					reward=Reward()
-					print reward
-          #reward = reward if not done else -10
-					done=0
-					agent.remember(state, action, reward, next_state, done) #make sure state,action,next_state parameters cnn can understand
-					state = next_state
-					'''if done:
-                agent.update_target_model()
-                print("episode: {}/{}, score: {}, e: {:.2}"
-                      .format(e, EPISODES, time, agent.epsilon))
-                break'''		
-                			#print "agent.memory "+str(len(agent.memory))
-					if len(agent.memory) > batch_size:
-						agent.replay(batch_size)
-					if e % 10 == 0:
-					     
-					     agent.save(unique_filename)
-		traci.close()
-		time_end = time()
+				for Time in range(500):   #time range?	
+					if Time%5==0:									
+						action = agent.act(state)
+						print "Action Index" +str(action)
+						performAction(action)	
+						matricesToState()	  
+						actionState=np.zeros((1,4))
+						#print actionState.shape
+						inp1=np.expand_dims(np.expand_dims(np.array(P),axis=2),axis=0)
+						inp2=np.expand_dims(np.expand_dims(np.array(V),axis=2),axis=0)
+						#print actionState
+						actionState[0][action]=1
+						next_state = {'input_1':inp1,'input_2':inp2,'input_3':actionState}
+						
+						
+						reward=Reward()
+						print reward
+          	#reward = reward if not done else -10
+						done=0
+						agent.remember(state, action, reward, next_state, done) #make sure state,action,next_state 	parameters cnn can understand
+						state = next_state
+						'''if done:
+        					        agent.update_target_model()
+					                print("episode: {}/{}, score: {}, e: {:.2}"
+					                      .format(e, EPISODES, time, agent.epsilon))
+					                break'''		
+	                			#print "agent.memory "+str(len(agent.memory))
+						if len(agent.memory) > batch_size:
+							agent.replay(batch_size)
+						if e % 10 == 0:
+							agent.save(unique_filename)
+				traci.close()
+				time_end = time()
         
