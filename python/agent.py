@@ -10,9 +10,9 @@ from keras.layers import Dense,Flatten,Concatenate,Input,concatenate
 from keras.optimizers import Adam
 from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
+import matplotlib.pyplot as plt
 
-
-cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','7200','-e','500'] #set waiting time meory to maximum time
+cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500'] #set waiting time meory to maximum time
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -25,11 +25,12 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self):
 
-        self.memory = deque(maxlen=8000)
+        self.memory = deque(maxlen=50)
         self.epsilon = 0.6                 #To check exploitive and exploration
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.debug = True
+        self.gamma = 0.001
         #self.traci=traci
         self.avgvl=5
         self.lanearrylength=50
@@ -40,13 +41,16 @@ class DQNAgent:
         self.actionlist=['GGGGGrrrrrrrrrGGGGrrrrrrGGGG',
                          'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
                          'rrrrrrrrrrGGGGGrrrrrGGGGGrrr',
-                         'GGGGGrrrrrrrrrrGGGGGrrrrrrrr',
+                         'GGGGGrrrrrrrrrrGGGGGrrrrrGGG',
                          'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
-                         'rrrrrrrrrrrGGGGGrrrrrrrrrGGG',
+                         'rrrrrrrrrrrGGGGGrrrrGrrrrGGG',
                          'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
-                         'GGGGrrrrrrrrrrrrrrrrGGGGGrrr',
+                         'GGGGrrrrrrrrGGGrrGGGGrrrrrrr',
+                         'GGGGGGGGGGGGGGGGGGGGGGGGGGGG',
+                         'rrrrrrrrrrrrrrrrrrrrrrrrrrrr'
                          ]
         self.actionsize=0
+
         self.setDefaultNumbers()   #To set action size and number of lanes
         self.model=None
         self.batch_size=10
@@ -77,9 +81,7 @@ class DQNAgent:
          return
     def convertSateto4dim(self,state):
          tempstate={'input_1':state['input_1'][newaxis,:,:,:],'input_2':state['input_2'][newaxis,:,:,:],'input_3':state['input_3'][newaxis,:]}
-         print tempstate['input_1'].shape
-         print tempstate['input_2'].shape
-         print tempstate['input_3'].shape
+
          return tempstate
 
     def generateActionIndex(self,state):
@@ -99,28 +101,41 @@ class DQNAgent:
 
     def generateActionArray(self,ind):
 
-         print "The action size" + str(self.actionsize)
-         actionarrt=np.zeros((self.actionsize))
-         print "the array shap" + str(actionarrt.shape)
+
+         actionarrt=np.zeros((self.actionsize),dtype=float)
+
          actionarrt[ind]=1
          return actionarrt
 
     def learn(self):                                               #could be more efficient
-         inp1 =array('i')
-         inp2 =array('i')                                       #integer array
-         inp3 =array('i')
-         targ1=array('i')
+         inp1 =[]
+         inp2 =[]
+         inp3 =[]
+         targ1=[]
          for state,reward,nextstate in self.memory:
-               self.printd("the dimes" +str(inp1.shape) + "   "+str(state['input_1'].shape))
-               np.append(inp1,state['input_1'],axis=0)
-               np.append(inp2,state['input_2'],axis=0)
-               np.append(inp3,state['input_3'],axis=0)
-               targ=np.zeros(actionsize)
-               targ[nextstate]=reward+self.gamma(model.predict(state))
-               targ1.append(targ,axis=0)
+
+               inp1.append(state['input_1'])
+               inp2.append(state['input_2'])
+               inp3.append(state['input_3'])
+               targ=np.zeros(self.actionsize)
+
+
+               temparry=self.model.predict(self.convertSateto4dim(state))
+
+               print temparry
+               temp=np.argmax(temparry)
+               print "selected action" + str(temp)
+               temp=temparry[0][temp]
+               targ[nextstate]=reward +self.gamma*temp
+               print targ
+               targ1.append(targ)
+         inp1=np.array(inp1)
+         inp2=np.array(inp2)
+         inp3=np.array(inp3)
+         targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
+         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
          return
 
 
@@ -160,8 +175,7 @@ class DQNAgent:
         wait=0;
         for x in lanelist:
              speedi,posi,waitt=self.getSpeedandPositionandTime(traci,x,debug-1)
-             if (debug>=1) :
-                  print "waiting time at " +x + " :" + str(waitt)
+
              wait=wait+waitt
              speedl.append(speedi)
              posl.append(posi)
@@ -180,7 +194,7 @@ class DQNAgent:
     def create_model(self):                          #creates the model using fumctional API
         first_con_input = Input(shape=(16,50,1))    #size of matrix
         second_con_input = Input(shape=(16,50,1))   #size of matrix
-        third_et_input = Input(shape=(8,))         #TODO replace these predefined numbers  to class variables
+        third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
         model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(first_con_input)
         model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(second_con_input)
         model1_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model1_1)	#
@@ -197,10 +211,10 @@ class DQNAgent:
         #model3_2=Flatten()(model3_1)  #not used
         tempmodel=concatenate([model1_6,model2_6])
         finalemodel_1=concatenate([tempmodel,model3_1],axis=1)
-        finalemodel_2=Dense(530, activation='relu')(finalemodel_1)
-        finalmodel=Dense(8, activation='softmax')(finalemodel_2)     #output row and column TODO replace this with variables
+        finalemodel_2=Dense(50, activation='relu')(finalemodel_1)      #change values
+        finalmodel=Dense(self.actionsize, activation='softmax')(finalemodel_2)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
-        final.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-6),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -216,9 +230,13 @@ class DQNAgent:
          self.doAction(traci,'5',curstate)
          sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
          time=1
+         self.epsilon=1.0
+         plotx=[]
+         wt=[]
+         tt=0
          while True:
              traci.simulationStep()
-             if time%15==0 :
+             if time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
 
                   prvstate=curstate
@@ -228,15 +246,25 @@ class DQNAgent:
                   reward=w-oldw
                   reward=reward*(-1)                     #negate the reward
                   oldw=w
-                  self.add(state,reward,self.generateActionArray(prvstate))
-                  print reward
+                  plotx.append(reward)
+                  wt.append(w)
+                  self.add(state,reward,prvstate)
+
+                  print "reward is " + str(reward)
              if time%100==0:
                   self.learn()
+                  self.epsilon=self.epsilon-0.00008
+                  print "epislion" +str(self.epsilon)
+             if time%10000==0:
+                  plt.plot(plotx)
+                  plt.plot(wt)
+                  print "tt"+str(tt)
+                  plt.show()
              time=time+1
+             tt=tt+traci.simulation.getEndingTeleportNumber()
 
 
-
-
+np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
 a = DQNAgent()
 a.starttraci()
 a.setDefaultNumbers()
