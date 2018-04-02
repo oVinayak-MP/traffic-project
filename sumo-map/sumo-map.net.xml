@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Fri Mar  9 15:28:59 2018 by SUMO netconvert Version 0.32.0
+<!-- generated on Tue Mar 20 23:40:56 2018 by SUMO netconvert Version 0.32.0
 <?xml version="1.0" encoding="UTF-8"?>
 
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
@@ -178,6 +178,12 @@
         <phase duration="6" state="rrrrrrrrrrrrGGrrrrrrrrrrrrGG"/>
         <phase duration="3" state="rrrrrrrrrrrryyrrrrrrrrrrrryy"/>
     </tlLogic>
+    <tlLogic id="5" type="static" programID="my_program" offset="0">
+        <phase duration="20" state="GGGGGrrrrrrrrrrrrrrrGGGGGrrr"/>
+        <phase duration="20" state="rrrrrGGGGGrrrrrGGGGGrrrrrrrr"/>
+        <phase duration="20" state="GGGGGrrrrrGGGGGrrrrrrrrrrrrr"/>
+        <phase duration="20" state="GGGGGrrrrrGGGGGrrrrrrrrrrGGG"/>
+    </tlLogic>
 
     <junction id="1" type="priority" x="0.00" y="251.00" incLanes="5to1r_0 5to1r_1 5to1r_2 5to1r_3" intLanes=":1_0_0" shape="0.00,250.95 0.00,264.15 0.00,251.05">
         <request index="0" response="0" foes="0" cont="0"/>
@@ -237,28 +243,28 @@
     <connection from="1to5" to="5to2r" fromLane="2" toLane="2" via=":5_22_2" tl="5" linkIndex="24" dir="s" state="o"/>
     <connection from="1to5" to="5to2r" fromLane="3" toLane="3" via=":5_22_3" tl="5" linkIndex="25" dir="s" state="o"/>
     <connection from="1to5" to="5to3r" fromLane="3" toLane="3" via=":5_26_0" tl="5" linkIndex="26" dir="l" state="o"/>
-    
+    <connection from="1to5" to="5to1r" fromLane="3" toLane="3" via=":5_27_0" tl="5" linkIndex="27" dir="t" state="o"/>
     <connection from="2to5" to="5to3r" fromLane="0" toLane="0" via=":5_7_0" tl="5" linkIndex="7" dir="r" state="o"/>
     <connection from="2to5" to="5to1r" fromLane="0" toLane="0" via=":5_8_0" tl="5" linkIndex="8" dir="s" state="o"/>
     <connection from="2to5" to="5to1r" fromLane="1" toLane="1" via=":5_8_1" tl="5" linkIndex="9" dir="s" state="o"/>
     <connection from="2to5" to="5to1r" fromLane="2" toLane="2" via=":5_8_2" tl="5" linkIndex="10" dir="s" state="o"/>
     <connection from="2to5" to="5to1r" fromLane="3" toLane="3" via=":5_8_3" tl="5" linkIndex="11" dir="s" state="o"/>
     <connection from="2to5" to="5to4r" fromLane="3" toLane="3" via=":5_12_0" tl="5" linkIndex="12" dir="l" state="o"/>
- 
+    <connection from="2to5" to="5to2r" fromLane="3" toLane="3" via=":5_13_0" tl="5" linkIndex="13" dir="t" state="o"/>
     <connection from="3to5" to="5to1r" fromLane="0" toLane="0" via=":5_0_0" tl="5" linkIndex="0" dir="r" state="o"/>
     <connection from="3to5" to="5to4r" fromLane="0" toLane="0" via=":5_1_0" tl="5" linkIndex="1" dir="s" state="o"/>
     <connection from="3to5" to="5to4r" fromLane="1" toLane="1" via=":5_1_1" tl="5" linkIndex="2" dir="s" state="o"/>
     <connection from="3to5" to="5to4r" fromLane="2" toLane="2" via=":5_1_2" tl="5" linkIndex="3" dir="s" state="o"/>
     <connection from="3to5" to="5to4r" fromLane="3" toLane="3" via=":5_1_3" tl="5" linkIndex="4" dir="s" state="o"/>
     <connection from="3to5" to="5to2r" fromLane="3" toLane="3" via=":5_5_0" tl="5" linkIndex="5" dir="l" state="o"/>
-   
+    <connection from="3to5" to="5to3r" fromLane="3" toLane="3" via=":5_6_0" tl="5" linkIndex="6" dir="t" state="o"/>
     <connection from="4to5" to="5to2r" fromLane="0" toLane="0" via=":5_14_0" tl="5" linkIndex="14" dir="r" state="o"/>
     <connection from="4to5" to="5to3r" fromLane="0" toLane="0" via=":5_15_0" tl="5" linkIndex="15" dir="s" state="o"/>
     <connection from="4to5" to="5to3r" fromLane="1" toLane="1" via=":5_15_1" tl="5" linkIndex="16" dir="s" state="o"/>
     <connection from="4to5" to="5to3r" fromLane="2" toLane="2" via=":5_15_2" tl="5" linkIndex="17" dir="s" state="o"/>
     <connection from="4to5" to="5to3r" fromLane="3" toLane="3" via=":5_15_3" tl="5" linkIndex="18" dir="s" state="o"/>
     <connection from="4to5" to="5to1r" fromLane="3" toLane="3" via=":5_19_0" tl="5" linkIndex="19" dir="l" state="o"/>
-  
+    <connection from="4to5" to="5to4r" fromLane="3" toLane="3" via=":5_20_0" tl="5" linkIndex="20" dir="t" state="o"/>
     <connection from="5to1r" to="1to5" fromLane="3" toLane="3" via=":1_0_0" dir="t" state="M"/>
     <connection from="5to2r" to="2to5" fromLane="3" toLane="3" via=":2_0_0" dir="t" state="M"/>
     <connection from="5to3r" to="3to5" fromLane="3" toLane="3" via=":3_0_0" dir="t" state="M"/>
