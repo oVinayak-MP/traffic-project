@@ -25,12 +25,12 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self):
 
-        self.memory = deque(maxlen=50)
+        self.memory = deque(maxlen=8000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.001
+        self.gamma = 0.05
         #self.traci=traci
         self.avgvl=5
         self.lanearrylength=50
@@ -38,16 +38,12 @@ class DQNAgent:
         self.numlanes=0                    #Not yet used TODO use it inside the neural network
         self.lanelist=['1to5_0','1to5_1','1to5_2','1to5_3','2to5_0','2to5_1','2to5_2','2to5_3','3to5_0','3to5_1','3to5_2','3to5_3','4to5_0','4to5_1','4to5_2','4to5_3']#create a general function for it
 
-        self.actionlist=['GGGGGrrrrrrrrrGGGGrrrrrrGGGG',
-                         'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
-                         'rrrrrrrrrrGGGGGrrrrrGGGGGrrr',
-                         'GGGGGrrrrrrrrrrGGGGGrrrrrGGG',
-                         'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
-                         'rrrrrrrrrrrGGGGGrrrrGrrrrGGG',
-                         'rrrrrGGGGGrrrrrrrrrrGGGGGrrr',
-                         'GGGGrrrrrrrrGGGrrGGGGrrrrrrr',
-                         'GGGGGGGGGGGGGGGGGGGGGGGGGGGG',
+        self.actionlist=['GGGGGGGrrrrrrrrrrrrrrrrrrrrr',
+                         'rrrrrrrGGGGGGGrrrrrrrrrrrrrr',
+                         'rrrrrrrrrrrrrrGGGGGGGrrrrrrr',
+                         'rrrrrrrrrrrrrrrrrrrrrGGGGGGG',
                          'rrrrrrrrrrrrrrrrrrrrrrrrrrrr'
+
                          ]
         self.actionsize=0
 
@@ -58,6 +54,12 @@ class DQNAgent:
         self.actionyellowperiod=7
         return
 
+    def loadmodel(self,filename):
+        self.model.load_weights(filename)
+        return
+    def savemodel(self,filename):
+        self.model.save_weights(filename)
+        return
    
 
     def printd(self,str):
@@ -135,7 +137,7 @@ class DQNAgent:
          targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
+         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=2,verbose=1)
          return
 
 
@@ -207,14 +209,14 @@ class DQNAgent:
         model2_5=Flatten()(model2_4)
         model1_6=Dense(256, activation='relu')(model1_5)
         model2_6=Dense(256, activation='relu')(model2_5)
-        model3_1=Dense(18, activation='relu')(third_et_input) #size of state
+        model3_1=Dense(self.actionsize, activation='relu')(third_et_input) #size of state
         #model3_2=Flatten()(model3_1)  #not used
         tempmodel=concatenate([model1_6,model2_6])
         finalemodel_1=concatenate([tempmodel,model3_1],axis=1)
-        finalemodel_2=Dense(50, activation='relu')(finalemodel_1)      #change values
+        finalemodel_2=Dense(512+self.actionsize, activation='relu')(finalemodel_1)      #change values
         finalmodel=Dense(self.actionsize, activation='softmax')(finalemodel_2)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
-        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-6),metrics=['accuracy'])
+        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-7),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -233,8 +235,9 @@ class DQNAgent:
          self.epsilon=1.0
          plotx=[]
          wt=[]
+         teleportime =[]
          tt=0
-         while True:
+         while time<720000:
              traci.simulationStep()
              if time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
@@ -251,17 +254,21 @@ class DQNAgent:
                   self.add(state,reward,prvstate)
 
                   print "reward is " + str(reward)
-             if time%100==0:
-                  self.learn()
-                  self.epsilon=self.epsilon-0.00008
-                  print "epislion" +str(self.epsilon)
              if time%10000==0:
-                  plt.plot(plotx)
-                  plt.plot(wt)
+                  self.learn()
+                  self.epsilon=self.epsilon-0.00001
+                  print "epislion" +str(self.epsilon)
+             if time%1000000==0:
+                  fg,(pl1,pl2)=plt.subplots(2,1)
+                  pl1.plot(plotx)
+                  pl1.plot(wt)
+                  pl2.plot(teleportime)
                   print "tt"+str(tt)
                   plt.show()
+                  self.savemodel("mod.h5")
              time=time+1
-             tt=tt+traci.simulation.getEndingTeleportNumber()
+             tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
+             teleportime.append(traci.simulation.getEndingTeleportNumber())
 
 
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
@@ -270,22 +277,3 @@ a.starttraci()
 a.setDefaultNumbers()
 a.create_model()
 a.run(traci)
-#a.getSpeedandPosition(traci,)
-'''
-mod=a.create_model()
-pos= np.random.rand(10000,12,20,1)
-#pos= np.random.rand(12,20)
-#pos=np.reshape(pos,(1,12,20,1))
-#speed= np.random.rand(12,20)
-#speed= np.reshape(speed,(1,12,20,1))
-speed= np.random.rand(10000,12,20,1)
-state = np.random.rand(10000,8)
-#ops = np.random.rand(18)
-ops=state
-print state
-#state=np.reshape(state,(100,1,18))
-#ops=np.reshape(ops,(1,18))
-inps={"input_1": pos,"input_2":speed,"input_3":state}
-type (inps)
-mod.fit(inps,ops,batch_size=100,epochs=100000)'''
-print('hello')
