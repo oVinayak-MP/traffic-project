@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 
-cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500'] #set waiting time meory to maximum time
+cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500'] #set waiting time meory to maximum time change gui mode
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -46,6 +46,7 @@ class DQNAgent:
 
                          ]
         self.actionsize=0
+        self.time=0
 
         self.setDefaultNumbers()   #To set action size and number of lanes
         self.model=None
@@ -81,6 +82,9 @@ class DQNAgent:
          self.printd("action index is " + str(actionindex))
          traci.trafficlights.setRedYellowGreenState(idno, self.actionlist[actionindex])
          return
+    def doActionStr(self,traci,idno,strs):
+         traci.trafficlights.setRedYellowGreenState(idno,strs)
+
     def convertSateto4dim(self,state):
          tempstate={'input_1':state['input_1'][newaxis,:,:,:],'input_2':state['input_2'][newaxis,:,:,:],'input_3':state['input_3'][newaxis,:]}
 
@@ -128,7 +132,7 @@ class DQNAgent:
                temp=np.argmax(temparry)
                print "selected action" + str(temp)
                temp=temparry[0][temp]
-               targ[nextstate]=reward +self.gamma*temp
+               targ[nextstate]=reward +self.gamma*temp                                        #need to change equation
                print targ
                targ1.append(targ)
          inp1=np.array(inp1)
@@ -137,8 +141,17 @@ class DQNAgent:
          targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=2,verbose=1)
+         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
          return
+    def generateIntermediateAction(self,action1,action2):
+         lens=len(action1)
+         temp=action1
+         for i in range(0,lens):
+              if action1[i]!=action2[i]:
+                   if action1[i]=='G' or action1[i]=='g' :
+                        temp=temp[:i] + 'Y' + temp[i+1:]                #remove condition if you want yellow between red to green transition
+
+         return temp
 
 
 
@@ -207,21 +220,26 @@ class DQNAgent:
         model2_4=MaxPooling2D(pool_size=(2, 2), strides=(2, 2),padding='same')(model2_3)	#
         model1_5=Flatten()(model1_4)
         model2_5=Flatten()(model2_4)
-        model1_6=Dense(256, activation='relu')(model1_5)
-        model2_6=Dense(256, activation='relu')(model2_5)
+        #model1_6=Dense(256, activation='relu')(model1_5)                 #might not need these
+        #model2_6=Dense(256, activation='relu')(model2_5)
         model3_1=Dense(self.actionsize, activation='relu')(third_et_input) #size of state
         #model3_2=Flatten()(model3_1)  #not used
-        tempmodel=concatenate([model1_6,model2_6])
+        tempmodel=concatenate([model1_5,model2_5])
         finalemodel_1=concatenate([tempmodel,model3_1],axis=1)
-        finalemodel_2=Dense(512+self.actionsize, activation='relu')(finalemodel_1)      #change values
-        finalmodel=Dense(self.actionsize, activation='softmax')(finalemodel_2)     #output row and column TODO replace this with variables
+        finalemodel_2=Dense(128, activation='relu')(finalemodel_1)      #change values
+        finalemodel_3=Dense(64, activation='relu')(finalemodel_2)      #change values
+        finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
-        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-7),metrics=['accuracy'])
+        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-6),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
         self.model=final
         return final
+
+    def threadexplorer(self,a):
+         self.starttraci()
+
 
 
     def run(self,traci):
@@ -231,49 +249,62 @@ class DQNAgent:
          prvstate=curstate
          self.doAction(traci,'5',curstate)
          sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
-         time=1
+         self.time=4
          self.epsilon=1.0
          plotx=[]
          wt=[]
          teleportime =[]
          tt=0
-         while time<720000:
+         while self.time<720000:
              traci.simulationStep()
-             if time%12==0 :
+             if self.time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
-
+                  self.printd("doing yellow")
                   prvstate=curstate
                   curstate=self.generateActionIndex(state)
-                  self.doAction(traci,'5',curstate)
                   sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
                   reward=w-oldw
                   reward=reward*(-1)                     #negate the reward
                   oldw=w
                   plotx.append(reward)
                   wt.append(w)
-                  self.add(state,reward,prvstate)
+                  self.add(state,reward,prvstate)                                         #add to the buffer the previous state its reward and action taken at that state
+                  yellowaction=a.generateIntermediateAction(self.actionlist[prvstate],self.actionlist[curstate])
+                  self.printd("yellow action is"+str(yellowaction))
+                  self.doActionStr(traci,'5',yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
+
 
                   print "reward is " + str(reward)
-             if time%10000==0:
+             if self.time%12==3 :
+                  self.printd("doing action")
+                  self.doAction(traci,'5',curstate)                                                #sets the current state after the yellow transition
+
+             if self.time%100==0:
                   self.learn()
                   self.epsilon=self.epsilon-0.00001
                   print "epislion" +str(self.epsilon)
-             if time%1000000==0:
-                  fg,(pl1,pl2)=plt.subplots(2,1)
-                  pl1.plot(plotx)
-                  pl1.plot(wt)
-                  pl2.plot(teleportime)
-                  print "tt"+str(tt)
-                  plt.show()
+             if self.time%10000==0:
+                  #fg,(pl1,pl2)=plt.subplots(2,1)
+                  #pl1.plot(plotx)
+                  #pl1.plot(wt)
+                  #pl2.plot(teleportime)
+                  #print "tt"+str(tt)
+                  #plt.show()
                   self.savemodel("mod.h5")
-             time=time+1
+             self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
              teleportime.append(traci.simulation.getEndingTeleportNumber())
 
 
+
+
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
 a = DQNAgent()
+
 a.starttraci()
 a.setDefaultNumbers()
 a.create_model()
+if (os.path.exists('mod.h5')):
+     a.loadmodel("mod.h5")
 a.run(traci)
+a.savemodel("mod.h5")
