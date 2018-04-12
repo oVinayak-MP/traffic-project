@@ -7,12 +7,12 @@ from numpy import newaxis,array
 from collections import deque
 from keras.models import Sequential,Model
 from keras.layers import Dense,Flatten,Concatenate,Input,concatenate
-from keras.optimizers import Adam
+from keras.optimizers import Adam,RMSprop
 from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 
-cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500'] #set waiting time meory to maximum time change gui mode
+cmd = ['sumo', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500','--time-to-teleport','-5'] #set waiting time meory to maximum time change gui mode
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -25,12 +25,12 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self):
 
-        self.memory = deque(maxlen=8000)     #max size of queue
+        self.memory = deque(maxlen=18000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.05
+        self.gamma = 0.0
         #self.traci=traci
         self.avgvl=5
         self.lanearrylength=50
@@ -47,19 +47,25 @@ class DQNAgent:
                          ]
         self.actionsize=0
         self.time=0
-
+        self.history=0
         self.setDefaultNumbers()   #To set action size and number of lanes
         self.model=None
-        self.batch_size=10
+        self.batch_size=32
         self.actiontimeperiod=25
         self.actionyellowperiod=7
         return
 
-    def loadmodel(self,filename):
+    def loadmodelweights(self,filename):
         self.model.load_weights(filename)
         return
-    def savemodel(self,filename):
+    def savemodelweights(self,filename):
         self.model.save_weights(filename)
+        return
+    def loadmodel(self,filename):
+        self.model.load(filename)
+        return
+    def savemodel(self,filename):
+        self.model.save(filename)
         return
    
 
@@ -85,7 +91,7 @@ class DQNAgent:
     def doActionStr(self,traci,idno,strs):
          traci.trafficlights.setRedYellowGreenState(idno,strs)
 
-    def convertSateto4dim(self,state):
+    def convertSateto4dim(self,state):                                        #converts it into the state accpeted by the predict function
          tempstate={'input_1':state['input_1'][newaxis,:,:,:],'input_2':state['input_2'][newaxis,:,:,:],'input_3':state['input_3'][newaxis,:]}
 
          return tempstate
@@ -108,10 +114,31 @@ class DQNAgent:
     def generateActionArray(self,ind):
 
 
-         actionarrt=np.zeros((self.actionsize),dtype=float)
+         actionarrt=np.zeros((self.actionsize),dtype=int)
 
          actionarrt[ind]=1
          return actionarrt
+    def learndummy(self):
+         while True:
+              inp1=np.zeros((500,16,50,1))
+              inp2=np.zeros((500,16,50,1))
+              inp3=np.zeros((500,self.actionsize))
+              inp3[:][0]=1
+              targ=np.zeros((500,self.actionsize))
+              targ[:][0]=10000
+
+
+              inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
+              print "inputs"+str(inputs)
+              print "target"+str(targ)
+
+
+              self.model.fit(inputs,targ,batch_size=32,epochs=1,verbose=1)
+              print self.model.predict(inputs)
+              input()
+
+
+
 
     def learn(self):                                               #could be more efficient
          inp1 =[]
@@ -128,11 +155,13 @@ class DQNAgent:
 
                temparry=self.model.predict(self.convertSateto4dim(state))
 
-               print temparry
-               temp=np.argmax(temparry)
+               print temparry[0]
+               temp=np.argmax(temparry[0])
                print "selected action" + str(temp)
                temp=temparry[0][temp]
                targ[nextstate]=reward +self.gamma*temp                                        #need to change equation
+
+
                print targ
                targ1.append(targ)
          inp1=np.array(inp1)
@@ -141,7 +170,7 @@ class DQNAgent:
          targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
+         self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=2,verbose=1)
          return
     def generateIntermediateAction(self,action1,action2):
          lens=len(action1)
@@ -210,8 +239,8 @@ class DQNAgent:
         first_con_input = Input(shape=(16,50,1))    #size of matrix
         second_con_input = Input(shape=(16,50,1))   #size of matrix
         third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
-        model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(first_con_input)
-        model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='sigmoid',data_format='channels_last',padding='same')(second_con_input)
+        model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
+        model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
         model1_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model1_1)	#
         model2_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model2_1)
         model1_3=Conv2D(32, (2, 2), activation='relu')(model1_2)
@@ -222,15 +251,16 @@ class DQNAgent:
         model2_5=Flatten()(model2_4)
         #model1_6=Dense(256, activation='relu')(model1_5)                 #might not need these
         #model2_6=Dense(256, activation='relu')(model2_5)
-        model3_1=Dense(self.actionsize, activation='relu')(third_et_input) #size of state
+        #model3_1=Dense(self.actionsize, activation='relu')(third_et_input) #size of state
         #model3_2=Flatten()(model3_1)  #not used
-        tempmodel=concatenate([model1_5,model2_5])
-        finalemodel_1=concatenate([tempmodel,model3_1],axis=1)
+        tempmodel=concatenate([model1_5,model2_5],axis=-1)
+        tempmodel.shape
+        finalemodel_1=concatenate([tempmodel,third_et_input],axis=-1)
         finalemodel_2=Dense(128, activation='relu')(finalemodel_1)      #change values
         finalemodel_3=Dense(64, activation='relu')(finalemodel_2)      #change values
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
-        final.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-6),metrics=['accuracy'])
+        final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.006),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -259,7 +289,7 @@ class DQNAgent:
              traci.simulationStep()
              if self.time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
-                  self.printd("doing yellow")
+                  #self.printd("doing yellow")
                   prvstate=curstate
                   curstate=self.generateActionIndex(state)
                   sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
@@ -270,27 +300,28 @@ class DQNAgent:
                   wt.append(w)
                   self.add(state,reward,prvstate)                                         #add to the buffer the previous state its reward and action taken at that state
                   yellowaction=a.generateIntermediateAction(self.actionlist[prvstate],self.actionlist[curstate])
-                  self.printd("yellow action is"+str(yellowaction))
+                  #self.printd("yellow action is"+str(yellowaction))
                   self.doActionStr(traci,'5',yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
 
 
                   print "reward is " + str(reward)
              if self.time%12==3 :
-                  self.printd("doing action")
+                  #self.printd("doing action")
                   self.doAction(traci,'5',curstate)                                                #sets the current state after the yellow transition
 
-             if self.time%100==0:
+             if self.time%80000==0:
                   self.learn()
                   self.epsilon=self.epsilon-0.00001
                   print "epislion" +str(self.epsilon)
-             if self.time%10000==0:
-                  #fg,(pl1,pl2)=plt.subplots(2,1)
-                  #pl1.plot(plotx)
-                  #pl1.plot(wt)
-                  #pl2.plot(teleportime)
-                  #print "tt"+str(tt)
+             if self.time%80000==0:
+                  fg,(pl1,pl2)=plt.subplots(2,1)
+                  pl1.plot(plotx)
+                  pl1.plot(wt)
+                  pl2.plot(teleportime)
+                  print "tt"+str(tt)
                   #plt.show()
-                  self.savemodel("mod.h5")
+                  self.savemodelweights("mod.wt")
+                  print(self.history)
              self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
              teleportime.append(traci.simulation.getEndingTeleportNumber())
@@ -304,7 +335,9 @@ a = DQNAgent()
 a.starttraci()
 a.setDefaultNumbers()
 a.create_model()
-if (os.path.exists('mod.h5')):
-     a.loadmodel("mod.h5")
+if (os.path.exists('mod.wt')):
+    a.loadmodelweights("mod.wt")
 a.run(traci)
-a.savemodel("mod.h5")
+#a.learndummy()
+a.savemodel('mdel.h5')
+a.savemodelweights("mod.wt")
