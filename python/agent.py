@@ -30,7 +30,7 @@ class DQNAgent:
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.0
+        self.gamma = 0.05
         #self.traci=traci
         self.avgvl=5
         self.lanearrylength=50
@@ -53,6 +53,7 @@ class DQNAgent:
         self.batch_size=32
         self.actiontimeperiod=25
         self.actionyellowperiod=7
+        self.epoch=8000
         return
 
     def loadmodelweights(self,filename):
@@ -74,9 +75,9 @@ class DQNAgent:
             print str
         return
 
-    def add(self,state,reward,nextaction):        #remember
+    def add(self,state,reward,nextaction,nextstate):        #remember
 
-        self.memory.append((state,reward,nextaction))
+        self.memory.append((state,reward,nextaction,nextstate))
         return
 
     def setDefaultNumbers(self):
@@ -145,7 +146,7 @@ class DQNAgent:
          inp2 =[]
          inp3 =[]
          targ1=[]
-         for state,reward,nextstate in self.memory:
+         for state,reward,action,nextstate in self.memory:
 
                inp1.append(state['input_1'])
                inp2.append(state['input_2'])
@@ -155,13 +156,19 @@ class DQNAgent:
 
                temparry=self.model.predict(self.convertSateto4dim(state))
 
+
+
                print temparry[0]
                temp=np.argmax(temparry[0])
+               nextstate['input_3']=self.generateActionArray(temp)
+               nextreward=self.model.predict(self.convertSateto4dim(nextstate))       #predict thee next reward
+               nextreward=nextreward[0]
+               nextreward=np.max(nextreward)
                print "selected action" + str(temp)
                temp=temparry[0][temp]
-               targ[nextstate]=reward +self.gamma*temp                                        #need to change equation
+               targ[action]=reward +self.gamma*nextreward                                        #need to change equation
 
-
+               print "original reward is " + str(reward) + "and calculated reward is" +targ[action]
                print targ
                targ1.append(targ)
          inp1=np.array(inp1)
@@ -236,8 +243,8 @@ class DQNAgent:
 
 
     def create_model(self):                          #creates the model using fumctional API
-        first_con_input = Input(shape=(16,50,1))    #size of matrix
-        second_con_input = Input(shape=(16,50,1))   #size of matrix
+        first_con_input = Input(shape=(16,self.lanearrylength,1))    #size of matrix
+        second_con_input = Input(shape=(16,self.lanearrylength,1))   #size of matrix
         third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
         model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
         model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
@@ -293,12 +300,13 @@ class DQNAgent:
                   prvstate=curstate
                   curstate=self.generateActionIndex(state)
                   sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
+                  nextstate={'input_1':pos,'input_2':sp,'input_3':0}
                   reward=w-oldw
                   reward=reward*(-1)                     #negate the reward
                   oldw=w
                   plotx.append(reward)
                   wt.append(w)
-                  self.add(state,reward,prvstate)                                         #add to the buffer the previous state its reward and action taken at that state
+                  self.add(state,reward,prvstate,nextstate)                                         #add to the buffer the previous state its reward and action taken at that state
                   yellowaction=a.generateIntermediateAction(self.actionlist[prvstate],self.actionlist[curstate])
                   #self.printd("yellow action is"+str(yellowaction))
                   self.doActionStr(traci,'5',yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
