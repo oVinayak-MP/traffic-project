@@ -168,7 +168,7 @@ class DQNAgent:
                temp=temparry[0][temp]
                targ[action]=reward +self.gamma*nextreward                                        #need to change equation
 
-               print "original reward is " + str(reward) + "and calculated reward is" +targ[action]
+               print "original reward is " + str(reward) + "and calculated reward is" + str(targ[action])
                print targ
                targ1.append(targ)
          inp1=np.array(inp1)
@@ -243,8 +243,8 @@ class DQNAgent:
 
 
     def create_model(self):                          #creates the model using fumctional API
-        first_con_input = Input(shape=(16,self.lanearrylength,1))    #size of matrix
-        second_con_input = Input(shape=(16,self.lanearrylength,1))   #size of matrix
+        first_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))    #size of matrix
+        second_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))   #size of matrix
         third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
         model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
         model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
