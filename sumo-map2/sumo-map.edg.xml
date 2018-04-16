@@ -1,0 +1,39 @@
+<edges>
+  <edge from="k" id="ktoa" to="a" numLanes="4" />
+  <edge from="a" id="atokr" to="k" numLanes="4" />
+  
+  <edge from="j" id="jtoa" to="a" numLanes="4" />
+  <edge from="a" id="atojr" to="j" numLanes="4" />
+  
+  <edge from="a" id="atobc" to="b" numLanes="4" />
+  <edge from="b" id="btoac" to="a" numLanes="4" />
+  
+  <edge from="b" id="btoi" to="i" numLanes="4" />
+  <edge from="i" id="itobr" to="b" numLanes="4" />
+  
+  <edge from="b" id="btohr" to="h" numLanes="4" />
+  <edge from="h" id="htob" to="b" numLanes="4" />
+      
+  <edge from="b" id="btocc" to="c" numLanes="4" />
+  <edge from="c" id="ctobc" to="b" numLanes="4" />
+  
+  <edge from="c" id="ctogr" to="g" numLanes="4" />
+  <edge from="g" id="gtoc" to="c" numLanes="4" />
+  
+  <edge from="c" id="ctofr" to="f" numLanes="4" />
+  <edge from="f" id="ftoc" to="c" numLanes="4" />
+  
+  <edge from="d" id="dtoer" to="e" numLanes="4" />
+  <edge from="e" id="etod" to="d" numLanes="4" />
+  
+  <edge from="d" id="dtolr" to="l" numLanes="4" />
+  <edge from="l" id="ltod" to="d" numLanes="4" />
+  
+  <edge from="c" id="ctodc" to="d" numLanes="4" />
+  <edge from="d" id="dtocc" to="c" numLanes="4" />
+  
+  <edge from="a" id="atodc" to="d" numLanes="4" />
+  <edge from="d" id="dtoac" to="a" numLanes="4" />
+  
+      
+</edges>
