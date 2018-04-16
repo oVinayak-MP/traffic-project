@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 
-cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
+cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map1.sumocfg','--waiting-time-memory','999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -30,7 +30,7 @@ class DQNAgent:
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.05
+        self.gamma = 0.5
         #self.traci=traci
         self.avgvl=5
         self.lanearrylength=50
