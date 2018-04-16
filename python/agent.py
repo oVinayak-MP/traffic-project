@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 
-cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map1.sumocfg','--waiting-time-memory','999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
+
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -23,35 +23,36 @@ from tqdm import tqdm
 
 
 class DQNAgent:
-    def __init__(self):
+    def __init__(self,folder):
 
         self.memory = deque(maxlen=18000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
-        self.epsilon_min = 0.01
+        self.epsilon_decay= 0.1
+        self.epsilon_min = 0.2
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.5
+        self.gamma = 0.5                             #discount factor
         #self.traci=traci
         self.avgvl=5
+        self.learninterval=80000
+        self.saveweightsinterval=80000
+        self.sumofolder=folder
+        self.sumofile=self.sumofolder + '/sumo-map.sumocfg'
+
         self.lanearrylength=50
         self.maxspeed=15
         self.numlanes=0                    #Not yet used TODO use it inside the neural network
         self.lanelist=['1to5_0','1to5_1','1to5_2','1to5_3','2to5_0','2to5_1','2to5_2','2to5_3','3to5_0','3to5_1','3to5_2','3to5_3','4to5_0','4to5_1','4to5_2','4to5_3']#create a general function for it
 
-        self.actionlist=['GGrrrrrrrrrrrrrrrrrrrrrrrrrr',
-                         'rrGGrrrrrrrrrrrrrrrrrrrrrrrr',
-                         'rrrrGGrrrrrrrrrrrrrrrrrrrrrr',
-                         'rrrrrrGGrrrrrrrrrrrrrrrrrrrr',
-                         'rrrrrrrrGGrrrrrrrrrrrrrrrrrr',
-                         'rrrrrrrrrrGGrrrrrrrrrrrrrrrr',
-                         'rrrrrrrrrrrrGGrrrrrrrrrrrrrr',
-                         'rrrrrrrrrrrrrrGGrrrrrrrrrrrr',
-                         'rrrrrrrrrrrrrrrrGGrrrrrrrrrr',
-                         'rrrrrrrrrrrrrrrrrrGGrrrrrrrr',
-                         'rrrrrrrrrrrrrrrrrrrrGGrrrrrr',
-                         'rrrrrrrrrrrrrrrrrrrrrrGGrrrr',
-                         'rrrrrrrrrrrrrrrrrrrrrrrrGGGG'
-
+        self.actionlist=['GGGrGrrrGrrrGrrr',
+                         'GrGGGGrrGrrrGrrr',
+                         'GrrrGGGGGrrrGrrr',
+                         'GrrrGrGGGGrrGrrr',
+                         'GrrrGrrrGGGrGrrr',
+                         'GrrrGrrrGrGGGrrr',
+                         'GrrrGrrrGrrrGGrr',
+                         'GrrrGrrrGGGrGrGG',
+                         'GrrrGrrrGrrrGrrr'
                          ]
         self.actionsize=0
         self.time=0
@@ -62,6 +63,8 @@ class DQNAgent:
         self.actiontimeperiod=25
         self.actionyellowperiod=7
         self.epoch=8000
+        self.yellowstatelength=5
+        self.interval=12
         self.mseplot=[]
         return
 
@@ -234,6 +237,8 @@ class DQNAgent:
         lanespeed[:]=[round(x/self.maxspeed,2) for x in lanespeed]
         return lanespeed,lanepos,vehct
     def starttraci(self):
+
+        cmd = ['sumo-gui', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
 
@@ -257,6 +262,55 @@ class DQNAgent:
         if (debug >=1) :
              print "waiting time :"+str(wait)
         return speedl,posl,wait
+    def loadFromDefaultFoldler(self):
+         if (os.path.exists(self.sumofolder+'/model.h5') and False ):                       #change this to load model
+             a.loadmodel(self.sumofolder+"/model.h5")
+             print "Model Loaded from file"
+         elif(os.path.exists(self.sumofolder+'/mod.wt')):
+             a.loadmodelweights(self.sumofolder+"/mod.wt")
+             print "Model weights loaded from file"
+         if (os.path.exists(self.sumofolder+'/actions.txt')):
+              self.actionlist = []
+              infile = open(self.sumofolder+'/actions.txt','r')
+              for line in infile:
+                   self.actionlist.append(line.strip())
+              infile.close()
+
+              print "Model actions loaded from file"
+         else:
+              print "Unable to load actions from file"
+
+         if (os.path.exists(self.sumofolder+'/laneids.txt')):
+             self.lanelist = []
+             infile = open(self.sumofolder+'/laneids.txt','r')
+             for line in infile:
+                  self.lanelist.append(line.strip())
+             infile.close()
+             print "Model laneids loaded from file"
+         else:
+              print "Unable to load laneids from file"
+         self.setDefaultNumbers()
+         print self.lanelist
+         print self.actionlist
+         print self.numlanes
+         print self.actionsize
+         return
+    def saveActionsandLanestoFile(self):
+         f = open(self.sumofolder+'/actions.txt', 'w')
+         for s in self.actionlist:
+              f.write(s+'\n')
+         f.close()
+
+         g = open(self.sumofolder+'/laneids.txt', 'w')
+         for s in self.lanelist:
+              g.write(s+'\n')
+         g.close()
+
+
+
+
+
+
 
 
     def create_model(self):                          #creates the model using fumctional API
@@ -303,8 +357,8 @@ class DQNAgent:
          prvstate=curstate
          self.doAction(traci,'5',curstate)
          sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
-         self.time=4
-         self.epsilon=1.0
+         self.time=5
+
          plotx=[]
          wt=[]
          teleportime =[]
@@ -330,40 +384,39 @@ class DQNAgent:
 
 
                   print "reward is " + str(reward)
-             if self.time%12==3 :
+             if self.time%12==4 :
                   #self.printd("doing action")
                   self.doAction(traci,'5',curstate)                                                #sets the current state after the yellow transition
 
-             if self.time%80000==0:
+             if self.time%self.learninterval ==0:
                   self.learn()
-                  self.epsilon=self.epsilon-0.01
+                  self.epsilon=self.epsilon-self.epsilon_decay
                   print "epislion" +str(self.epsilon)
-             if self.time%80000==0:
+             if self.time%self.saveweightsinterval==0:
                   fg,(pl1,pl2)=plt.subplots(2,1)
                   pl1.plot(plotx)
                   pl1.plot(wt)
                   pl2.plot(self.mseplot)
                   print self.mseplot
-                  self.savemodelweights("mod.wt")
+                  self.savemodelweights(self.sumofolder+"/mod.wt")
                   print(self.history.history)
                   plt.show()
              self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
-             teleportime.append(traci.simulation.getEndingTeleportNumber())
+
 
 
 
 
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
-a = DQNAgent()
+a = DQNAgent('../sumo-map1')
 
 a.starttraci()
 a.setDefaultNumbers()
 a.create_model()
-if (os.path.exists('mdel.h5') and False ):                       #change this to load model
-    a.loadmodel("mdel.h5")
-elif(os.path.exists('mod.wt')):
-    a.loadmodelweights("mod.wt")
+#a.saveActionsandLanestoFile()
+a.loadFromDefaultFoldler()
+a.epsilon=.3
 a.run(traci)
 #a.learndummy()
 a.savemodel('mdel.h5')
