@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<nodes>
-  <node id="1" x="-250.0" y="0.0" type="priority" />
-  <node id="2" x="+250.0" y="0.0" type="priority" />
-  <node id="3" x="+.0" y="251.0" type="priority" />
-  <node id="4" x="+0.0" y="-251.0" type="priority"  />
-  <node id="5" x="0.0" y="0.0" type="traffic_light"  />
-  
-</nodes>
