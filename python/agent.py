@@ -1,6 +1,6 @@
 
 
-
+from sklearn.metrics import mean_squared_error
 import random
 import numpy as np
 from numpy import newaxis,array
@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 
-cmd = ['sumo', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','72000','-e','500','--time-to-teleport','-5'] #set waiting time meory to maximum time change gui mode
+cmd = ['sumo-gui', '-c', '../sumo-map/sumo-map.sumocfg','--waiting-time-memory','999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
 
 import os, sys
 if 'SUMO_HOME' in os.environ:
@@ -38,11 +38,19 @@ class DQNAgent:
         self.numlanes=0                    #Not yet used TODO use it inside the neural network
         self.lanelist=['1to5_0','1to5_1','1to5_2','1to5_3','2to5_0','2to5_1','2to5_2','2to5_3','3to5_0','3to5_1','3to5_2','3to5_3','4to5_0','4to5_1','4to5_2','4to5_3']#create a general function for it
 
-        self.actionlist=['GGGGGGGrrrrrrrrrrrrrrrrrrrrr',
-                         'rrrrrrrGGGGGGGrrrrrrrrrrrrrr',
-                         'rrrrrrrrrrrrrrGGGGGGGrrrrrrr',
-                         'rrrrrrrrrrrrrrrrrrrrrGGGGGGG',
-                         'rrrrrrrrrrrrrrrrrrrrrrrrrrrr'
+        self.actionlist=['GGrrrrrrrrrrrrrrrrrrrrrrrrrr',
+                         'rrGGrrrrrrrrrrrrrrrrrrrrrrrr',
+                         'rrrrGGrrrrrrrrrrrrrrrrrrrrrr',
+                         'rrrrrrGGrrrrrrrrrrrrrrrrrrrr',
+                         'rrrrrrrrGGrrrrrrrrrrrrrrrrrr',
+                         'rrrrrrrrrrGGrrrrrrrrrrrrrrrr',
+                         'rrrrrrrrrrrrGGrrrrrrrrrrrrrr',
+                         'rrrrrrrrrrrrrrGGrrrrrrrrrrrr',
+                         'rrrrrrrrrrrrrrrrGGrrrrrrrrrr',
+                         'rrrrrrrrrrrrrrrrrrGGrrrrrrrr',
+                         'rrrrrrrrrrrrrrrrrrrrGGrrrrrr',
+                         'rrrrrrrrrrrrrrrrrrrrrrGGrrrr',
+                         'rrrrrrrrrrrrrrrrrrrrrrrrGGGG'
 
                          ]
         self.actionsize=0
@@ -54,6 +62,7 @@ class DQNAgent:
         self.actiontimeperiod=25
         self.actionyellowperiod=7
         self.epoch=8000
+        self.mseplot=[]
         return
 
     def loadmodelweights(self,filename):
@@ -115,7 +124,7 @@ class DQNAgent:
     def generateActionArray(self,ind):
 
 
-         actionarrt=np.zeros((self.actionsize),dtype=int)
+         actionarrt=np.zeros((self.actionsize),dtype=float)
 
          actionarrt[ind]=1
          return actionarrt
@@ -146,6 +155,8 @@ class DQNAgent:
          inp2 =[]
          inp3 =[]
          targ1=[]
+         realrewards=[]
+         calcrewards=[]
          for state,reward,action,nextstate in self.memory:
 
                inp1.append(state['input_1'])
@@ -164,13 +175,17 @@ class DQNAgent:
                nextreward=self.model.predict(self.convertSateto4dim(nextstate))       #predict thee next reward
                nextreward=nextreward[0]
                nextreward=np.max(nextreward)
+               print "current action " + str(action)
                print "selected action" + str(temp)
                temp=temparry[0][temp]
-               targ[action]=reward +self.gamma*nextreward                                        #need to change equation
+               targ[action]=reward +self.gamma*nextreward
+               realrewards.append(reward)
+               calcrewards.append(temparry[0][action])
 
                print "original reward is " + str(reward) + "and calculated reward is" + str(targ[action])
                print targ
                targ1.append(targ)
+
          inp1=np.array(inp1)
          inp2=np.array(inp2)
          inp3=np.array(inp3)
@@ -178,6 +193,8 @@ class DQNAgent:
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
          self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=2,verbose=1)
+         mse=mean_squared_error(realrewards,calcrewards)
+         self.mseplot.append(mse)
          return
     def generateIntermediateAction(self,action1,action2):
          lens=len(action1)
@@ -319,17 +336,17 @@ class DQNAgent:
 
              if self.time%80000==0:
                   self.learn()
-                  self.epsilon=self.epsilon-0.00001
+                  self.epsilon=self.epsilon-0.01
                   print "epislion" +str(self.epsilon)
              if self.time%80000==0:
                   fg,(pl1,pl2)=plt.subplots(2,1)
                   pl1.plot(plotx)
                   pl1.plot(wt)
-                  pl2.plot(teleportime)
-                  print "tt"+str(tt)
-                  #plt.show()
+                  pl2.plot(self.mseplot)
+                  print self.mseplot
                   self.savemodelweights("mod.wt")
-                  print(self.history)
+                  print(self.history.history)
+                  plt.show()
              self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
              teleportime.append(traci.simulation.getEndingTeleportNumber())
@@ -343,7 +360,9 @@ a = DQNAgent()
 a.starttraci()
 a.setDefaultNumbers()
 a.create_model()
-if (os.path.exists('mod.wt')):
+if (os.path.exists('mdel.h5') and False ):                       #change this to load model
+    a.loadmodel("mdel.h5")
+elif(os.path.exists('mod.wt')):
     a.loadmodelweights("mod.wt")
 a.run(traci)
 #a.learndummy()
