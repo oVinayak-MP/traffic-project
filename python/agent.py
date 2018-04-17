@@ -25,13 +25,13 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self,folder):
 
-        self.memory = deque(maxlen=18000)     #max size of queue
+        self.memory = deque(maxlen=25000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
         self.epsilon_decay= 0.1
         self.epsilon_min = 0.2
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.5                             #discount factor
+        self.gamma = 0.75                             #discount factor
         #self.traci=traci
         self.avgvl=5
         self.learninterval=80000
@@ -294,13 +294,20 @@ class DQNAgent:
              print "waiting time :"+str(wait)
         return speedl,posl,wait
     def loadFromDefaultFoldler(self):
-         if (os.path.exists(self.sumofolder+'/model.h5') and False ):                       #change this to load model
-             a.loadmodel(self.sumofolder+"/model.h5")
-             print "Model Loaded from file"
-         elif(os.path.exists(self.sumofolder+'/mod.wt')):
-             a.loadmodelweights(self.sumofolder+"/mod.wt")
-             print "Model weights loaded from file"
-         if (os.path.exists(self.sumofolder+'/actions.txt')):
+
+
+         if (os.path.exists(self.sumofolder+'/laneids.txt')):                        #loads the laneids file
+             self.lanelist = []
+             infile = open(self.sumofolder+'/laneids.txt','r')
+             for line in infile:
+                  self.lanelist.append(line.strip())
+             infile.close()
+             print "Model laneids loaded from file"
+         else:
+              print "Unable to load laneids from file"
+
+
+         if (os.path.exists(self.sumofolder+'/actions.txt')):                       #loads the action file
               self.actionlist = []
               infile = open(self.sumofolder+'/actions.txt','r')
               for line in infile:
@@ -310,18 +317,16 @@ class DQNAgent:
               print "Model actions loaded from file"
          else:
               print "Unable to load actions from file"
-
-         if (os.path.exists(self.sumofolder+'/laneids.txt')):
-             self.lanelist = []
-             infile = open(self.sumofolder+'/laneids.txt','r')
-             for line in infile:
-                  self.lanelist.append(line.strip())
-             infile.close()
-             print "Model laneids loaded from file"
-         else:
-              print "Unable to load laneids from file"
-         self.readConfigFile()
+         self.readConfigFile()                                                              #reads the tls file
          self.setDefaultNumbers()
+         self.create_model()                                                                #creates model
+         if (os.path.exists(self.sumofolder+'/model.h5') and False ):                       #change this to load model
+             a.loadmodel(self.sumofolder+"/model.h5")
+             print "Model Loaded from file"
+         elif(os.path.exists(self.sumofolder+'/mod.wt')):
+             a.loadmodelweights(self.sumofolder+"/mod.wt")
+             print "Model weights loaded from file"
+
          print self.lanelist
          print self.actionlist
          print self.numlanes
@@ -387,7 +392,7 @@ class DQNAgent:
          print self.actionsize
          curstate=random.randrange(0,self.actionsize,1)
          prvstate=curstate
-         self.doAction(traci,'5',curstate)
+         self.doActionMultipleTLS(traci,self.actionlist[curstate])
          sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
          self.time=5
 
@@ -395,7 +400,7 @@ class DQNAgent:
          wt=[]
          teleportime =[]
          tt=0
-         while self.time<720000:
+         while self.time<7200000:
              traci.simulationStep()
              if self.time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
@@ -441,14 +446,13 @@ class DQNAgent:
 
 
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
-a = DQNAgent('../sumo-map1')
+a = DQNAgent('../sumo-map2')
 
 a.starttraci()
 a.setDefaultNumbers()
-a.create_model()
 #a.saveActionsandLanestoFile()
 a.loadFromDefaultFoldler()
-a.epsilon=.3
+a.epsilon=.99
 a.run(traci)
 #a.learndummy()
 a.savemodel('mdel.h5')
