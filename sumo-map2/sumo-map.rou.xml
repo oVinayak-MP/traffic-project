@@ -1,0 +1,101 @@
+<routes>
+  <vType accel="1.0" decel="5.0" id="Car" length="2.0" maxSpeed="100.0" sigma="0.0" />
+
+  <vTypeDistribution id="typedist1">
+    <vType id="type1" accel="0.8" length="5" maxSpeed="70" probability="0.9" sigma="0.5"/>
+        <vType id="type2" accel="1.8" length="15" maxSpeed="50" probability="0.1" sigma="0.5"/>
+  </vTypeDistribution>
+
+
+  <routeDistribution id="routedist1">
+    <route id="route1_1" edges="ktoa atodc dtoer" probability="0.8" color="0,255,0"/>
+     <route id="route1_2" edges="ktoa atodc dtolr" probability="0.8" color="0,255,0"/>
+    <route id="route1_3" edges="ktoa atodc dtocc ctofr" probability="0.5" color="255,0,0"/>
+    <route id="route1_4" edges="ktoa atodc dtocc ctogr" probability="0.5" color="255,0,0"/>
+    <route id="route1_5" edges="ktoa atodc dtocc ctobc btoac" probability="0.2" color="0,0,255"/>
+    <route id="route1_6" edges="ktoa atodc dtocc ctobc btoi" probability="0.2" color="0,0,255"/>
+    <route id="route1_7" edges="ktoa atodc dtocc ctobc btohr" probability="0.2" color="0,0,255"/>
+    
+     <route id="route1_1_1" edges="ktoa atobc btohr" probability="0.8" color="0,255,0"/>
+     <route id="route1_1_2" edges="ktoa atobc btoi" probability="0.8" color="0,255,0"/>
+    <route id="route1_1_3" edges="ktoa atobc btocc ctofr" probability="0.5" color="255,0,0"/>
+    <route id="route1_1_4" edges="ktoa atobc  btocc ctogr" probability="0.5" color="255,0,0"/>
+    <route id="route1_1_5" edges="ktoa atobc btocc ctodc dtoac" probability="0.2" color="0,0,255"/>
+    <route id="route1_1_6" edges="ktoa atobc btocc ctodc dtolr" probability="0.2" color="0,0,255"/>
+    <route id="route1_1_7" edges="ktoa atobc btocc ctodc dtoer" probability="0.2" color="0,0,255"/>
+    
+     <route id="route4_1" edges="jtoa atokr " probability="0.8" color="255,255,0"/>
+     <route id="route4_2" edges="jtoa atobc btohr" probability="0.8" color="255,255,0"/>
+      <route id="route4_3" edges="jtoa atobc btoi" probability="0.8" color="255,255,0"/>
+    <route id="route4_4" edges="jtoa atodc dtocc ctofr" probability="0.5" color="255,0,255"/>
+    <route id="route4_5" edges="jtoa atodc dtocc ctogr" probability="0.5" color="255,0,255"/>
+    <route id="route4_6" edges="jtoa atodc dtocc ctobc btoac" probability="0.2" color="255,0,255"/>
+    <route id="route4_7" edges="jtoa atodc dtocc ctobc btoi" probability="0.2" color="255,0,255"/>
+    <route id="route4_8" edges="jtoa atodc dtocc ctobc btohr" probability="0.2" color="255,0,255"/>
+
+<route id="route2_1" edges="itobr  btohr" probability="0.8" color="0,255,100"/>
+     <route id="route2_2" edges="itobr btocc ctofr" probability="0.8" color="0,255,100"/>
+     <route id="route2_2" edges="itobr btocc ctogr" probability="0.8" color="0,255,100"/>
+    <route id="route2_3" edges="itobr btocc ctofr" probability="0.5" color="255,0,100"/>
+    <route id="route2_4" edges="itobr btocc ctogr" probability="0.5" color="255,0,100"/>
+    <route id="route2_5" edges="itobr btocc ctodc dtolr" probability="0.2" color="255,0,100"/>
+      <route id="route2_6" edges="itobr btocc ctodc dtoer" probability="0.2" color="255,100,0"/>
+    <route id="route2_7" edges="itobr btocc ctodc dtoac atokr" probability="0.2" color="255,100,0"/>
+    <route id="route2_8" edges="itobr btocc ctodc dtoac atojr" probability="0.2" color="255,100,0"/>
+    
+    
+<route id="route6_1" edges="htob  btoi" probability="0.8" color="200,255,0"/>
+     <route id="route6_2" edges="htob btocc ctofr" probability="0.8" color="200,255,0"/>
+     <route id="route6_2" edges="htob btocc ctogr" probability="0.8" color="200,255,0"/>
+    <route id="route6_3" edges="htob btocc  ctofr" probability="0.5" color="255,0,0"/>
+    <route id="route6_4" edges="htob btocc ctogr" probability="0.5" color="255,0,0"/>
+    <route id="route6_5" edges="htob btocc ctodc dtolr" probability="0.2" color="255,0,0"/>
+      <route id="route6_6" edges="htob btocc ctodc dtoer" probability="0.2" color="255,0,0"/>
+    <route id="route6_7" edges="htob btocc ctodc dtoac atokr" probability="0.2" color="255,0,0"/>
+    <route id="route6_8" edges="htob btocc ctodc dtoac atojr" probability="0.2" color="255,0,0"/>
+    
+    
+<route id="route3_1" edges="gtoc ctofr" probability="0.8" color="0,255,0"/>
+     <route id="route3_2" edges="gtoc ctodc dtoer" probability="0.8" color="0,255,0"/>
+     <route id="route3_2" edges="gtoc ctodc dtolr" probability="0.8" color="0,255,0"/>
+    <route id="route3_3" edges="gtoc ctodc dtoac atojr" probability="0.5" color="255,0,0"/>
+    <route id="route3_4" edges="gtoc ctodc dtoac atokr" probability="0.5" color="255,0,0"/>
+    <route id="route3_5" edges="gtoc ctodc dtoac atobc btoi" probability="0.2" color="255,0,0"/>
+    <route id="route3_6" edges="gtoc ctodc dtoac atobc btocc" probability="0.2" color="255,0,0"/>
+    <route id="route3_7" edges="gtoc ctodc dtoac atobc btohr" probability="0.2" color="255,0,0"/>
+    
+    <route id="route5_1" edges="ftoc ctogr" probability="0.8" color="0,255,0"/>
+     <route id="route5_2" edges="ftoc ctodc dtoer" probability="0.8" color="0,255,0"/>
+     <route id="route5_3" edges="ftoc ctodc dtolr" probability="0.8" color="0,255,0"/>
+    <route id="route5_4" edges="ftoc ctodc dtoac atojr" probability="0.5" color="255,0,0"/>
+    <route id="route5_5" edges="ftoc ctodc dtoac atokr" probability="0.5" color="255,0,0"/>
+    <route id="route5_6" edges="ftoc ctodc dtoac atobc btoi" probability="0.2" color="255,0,0"/>
+    <route id="route5_7" edges="ftoc ctodc dtoac atobc btocc" probability="0.2" color="255,0,0"/>
+    <route id="route5_8" edges="ftoc ctodc dtoac atobc btohr" probability="0.2" color="255,0,0"/>
+    
+    <route id="route7_1" edges="etod  dtolr" probability="0.8" color="0,255,0"/>
+     <route id="route7_2" edges="etod  dtoac atojr" probability="0.8" color="0,255,0"/>
+     <route id="route7_3" edges="etod  dtoac atokr" probability="0.8" color="0,255,0"/>
+    <route id="route7_4" edges="etod   dtoac atobc btoi" probability="0.2" color="255,0,0"/>
+    <route id="route7_5" edges="etod  dtoac atobc btocc ctofr" probability="0.2" color="255,0,0"/>
+     <route id="route7_6" edges="etod  dtoac atobc btocc ctogr" probability="0.2" color="255,0,0"/>
+    <route id="route7_7" edges="etod   dtoac atobc btocc ctodc" probability="0.2" color="255,0,0"/>
+    
+      
+    <route id="route8_1" edges="ltod  dtoer" probability="0.8" color="0,255,0"/>
+     <route id="route8_2" edges="ltod  dtoac atojr" probability="0.8" color="0,255,0"/>
+     <route id="route8_3" edges="ltod  dtoac atokr" probability="0.8" color="0,255,0"/>
+    <route id="route8_4" edges="ltod  dtoac atobc btoi" probability="0.2" color="255,0,0"/>
+    <route id="route8_5" edges="ltod  dtoac atobc btocc ctofr" probability="0.2" color="255,0,0"/>
+     <route id="route8_6" edges="ltod  dtoac atobc btocc ctogr" probability="0.2" color="255,0,0"/>
+    <route id="route8_7" edges="ltod   dtoac atobc btocc ctodc" probability="0.2" color="255,0,0"/>
+    
+    
+     
+
+
+  </routeDistribution>
+  <flow depart="1" id="veh0" route="routedist1" type="typedist1" begin="0" period="7" end="7200000"  />
+  <flow depart="1" id="veh2" route="routedist1" type="typedist1" begin="0" period="5" end="7200000" />
+  
+</routes>
