@@ -1,8 +1,7 @@
 <configuration>
     <input>
             <net-file value="sumo-map.net.xml"/>
-            
-                   
+                    <route-files value="sumo-map.rou.xml"/>
                         </input>
                             <time>
                                     <begin value="0"/>
