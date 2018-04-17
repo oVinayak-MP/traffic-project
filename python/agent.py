@@ -38,6 +38,9 @@ class DQNAgent:
         self.saveweightsinterval=80000
         self.sumofolder=folder
         self.sumofile=self.sumofolder + '/sumo-map.sumocfg'
+        self.tlsidlist=[]
+        self.tlssizelist=[]
+        self.tlsnum=0
 
         self.lanearrylength=50
         self.maxspeed=15
@@ -97,12 +100,28 @@ class DQNAgent:
         self.actionsize=len(self.actionlist)
         return
 
-    def doAction(self,traci,idno,actionindex):
+    def doAction(self,traci,idno,actionindex):                                              #to be obselete
          self.printd("action index is " + str(actionindex))
          traci.trafficlights.setRedYellowGreenState(idno, self.actionlist[actionindex])
          return
-    def doActionStr(self,traci,idno,strs):
+    def doActionStr(self,traci,idno,strs):                                                    #to be obselete
          traci.trafficlights.setRedYellowGreenState(idno,strs)
+         return
+    def doActionMultipleTLS(self,traci,strin):
+         i=0
+         p=0
+         for tlsstr in self.tlsidlist:
+              act=strin[p:p+self.tlssizelist[i]]
+              traci.trafficlights.setRedYellowGreenState(tlsstr,act)
+              p=p+self.tlssizelist[i]
+              i=i+1
+
+              print act
+         return
+
+
+
+
 
     def convertSateto4dim(self,state):                                        #converts it into the state accpeted by the predict function
          tempstate={'input_1':state['input_1'][newaxis,:,:,:],'input_2':state['input_2'][newaxis,:,:,:],'input_3':state['input_3'][newaxis,:]}
@@ -241,6 +260,18 @@ class DQNAgent:
         cmd = ['sumo-gui', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
+    def readConfigFile(self):
+         fil=self.sumofolder+'/tls.txt'
+         f = open(fil,'r')
+         self.tlsnum=int(f.readline().strip())
+         for i in range(self.tlsnum):
+              self.tlsidlist.append(f.readline().strip())
+              self.tlssizelist.append(int(f.readline().strip()))
+
+         if len(self.tlsidlist)!=len(self.tlssizelist):
+              print "Invalid tls file"
+         return
+
 
     def getStateMatandWaittime(self,traci,lanelist,debug):
         speedl=[]
@@ -289,6 +320,7 @@ class DQNAgent:
              print "Model laneids loaded from file"
          else:
               print "Unable to load laneids from file"
+         self.readConfigFile()
          self.setDefaultNumbers()
          print self.lanelist
          print self.actionlist
@@ -380,13 +412,13 @@ class DQNAgent:
                   self.add(state,reward,prvstate,nextstate)                                         #add to the buffer the previous state its reward and action taken at that state
                   yellowaction=a.generateIntermediateAction(self.actionlist[prvstate],self.actionlist[curstate])
                   #self.printd("yellow action is"+str(yellowaction))
-                  self.doActionStr(traci,'5',yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
+                  self.doActionMultipleTLS(traci,yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
 
 
                   print "reward is " + str(reward)
              if self.time%12==4 :
                   #self.printd("doing action")
-                  self.doAction(traci,'5',curstate)                                                #sets the current state after the yellow transition
+                  self.doActionMultipleTLS(traci,self.actionlist[curstate])                                                #sets the current state after the yellow transition
 
              if self.time%self.learninterval ==0:
                   self.learn()
