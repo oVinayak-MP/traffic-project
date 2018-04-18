@@ -11,7 +11,7 @@ from keras.optimizers import Adam,RMSprop
 from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
-
+import tensorflow as tf
 
 
 import os, sys
@@ -25,16 +25,16 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self,folder):
 
-        self.memory = deque(maxlen=25000)     #max size of queue
+        self.memory = deque(maxlen=18000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
-        self.epsilon_decay= 0.1
+        self.epsilon_decay= 0.01
         self.epsilon_min = 0.2
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.75                             #discount factor
+        self.gamma = 0.05                             #discount factor
         #self.traci=traci
         self.avgvl=5
-        self.learninterval=80000
+        self.learninterval=8000
         self.saveweightsinterval=80000
         self.sumofolder=folder
         self.sumofile=self.sumofolder + '/sumo-map.sumocfg'
@@ -45,18 +45,9 @@ class DQNAgent:
         self.lanearrylength=50
         self.maxspeed=15
         self.numlanes=0                    #Not yet used TODO use it inside the neural network
-        self.lanelist=['1to5_0','1to5_1','1to5_2','1to5_3','2to5_0','2to5_1','2to5_2','2to5_3','3to5_0','3to5_1','3to5_2','3to5_3','4to5_0','4to5_1','4to5_2','4to5_3']#create a general function for it
+        self.lanelist=[]#create a general function for it
 
-        self.actionlist=['GGGrGrrrGrrrGrrr',
-                         'GrGGGGrrGrrrGrrr',
-                         'GrrrGGGGGrrrGrrr',
-                         'GrrrGrGGGGrrGrrr',
-                         'GrrrGrrrGGGrGrrr',
-                         'GrrrGrrrGrGGGrrr',
-                         'GrrrGrrrGrrrGGrr',
-                         'GrrrGrrrGGGrGrGG',
-                         'GrrrGrrrGrrrGrrr'
-                         ]
+        self.actionlist=[]
         self.actionsize=0
         self.time=0
         self.history=0
@@ -218,6 +209,16 @@ class DQNAgent:
          mse=mean_squared_error(realrewards,calcrewards)
          self.mseplot.append(mse)
          return
+    def lossFunction(self,y_true,y_pred):
+
+         maxi=K.argmax(y_true) #ok
+
+         #invert the axes
+         y_pred = K.permute_dimensions(y_pred,(1,0))
+
+         return K.mean((K.max(y_true,axis=-1) -(K.gather(y_pred,maxi)))**2)
+
+
     def generateIntermediateAction(self,action1,action2):
          lens=len(action1)
          temp=action1
@@ -269,7 +270,7 @@ class DQNAgent:
               self.tlssizelist.append(int(f.readline().strip()))
 
          if len(self.tlsidlist)!=len(self.tlssizelist):
-              print "Invalid tls file"
+              print "Invalid tls f-guiile"
          return
 
 
@@ -371,11 +372,12 @@ class DQNAgent:
         tempmodel=concatenate([model1_5,model2_5],axis=-1)
         tempmodel.shape
         finalemodel_1=concatenate([tempmodel,third_et_input],axis=-1)
-        finalemodel_2=Dense(128, activation='relu')(finalemodel_1)      #change values
-        finalemodel_3=Dense(64, activation='relu')(finalemodel_2)      #change values
+        finalemodel_2=Dense(512, activation='relu')(finalemodel_1)      #change values
+        finalemodel_3=Dense(256, activation='relu')(finalemodel_2)      #change values
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
-        final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.006),metrics=['accuracy'])
+        #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
+        final.compile(loss=self.lossFunction,optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -402,6 +404,8 @@ class DQNAgent:
          tt=0
          while self.time<7200000:
              traci.simulationStep()
+
+
              if self.time%12==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
                   #self.printd("doing yellow")
@@ -437,7 +441,7 @@ class DQNAgent:
                   print self.mseplot
                   self.savemodelweights(self.sumofolder+"/mod.wt")
                   print(self.history.history)
-                  plt.show()
+                  #plt.show()
              self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
 
@@ -455,5 +459,5 @@ a.loadFromDefaultFoldler()
 a.epsilon=.99
 a.run(traci)
 #a.learndummy()
-a.savemodel('mdel.h5')
-a.savemodelweights("mod.wt")
+a.savemodel(self.sumofolder+'mdel.h5')
+a.savemodelweights(self.sumofolder+"mod.wt")
