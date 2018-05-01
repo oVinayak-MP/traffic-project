@@ -93,7 +93,7 @@
 
 
   </routeDistribution>
-  <flow depart="1" id="veh0" route="routedist1" type="typedist1" begin="0" period="7" end="7200000"  />
-  <flow depart="1" id="veh2" route="routedist1" type="typedist1" begin="0" period="5" end="7200000" />
+  <flow depart="1" id="veh0" route="routedist1" type="typedist1" begin="0" period="13" end="7200000"  />
+  <flow depart="1" id="veh2" route="routedist1" type="typedist1" begin="0" period="12" end="7200000" />
   
 </routes>

@@ -34,7 +34,7 @@ class DQNAgent:
         self.gamma = 0.05                             #discount factor
         #self.traci=traci
         self.avgvl=5
-        self.learninterval=8000
+        self.learninterval=80000
         self.saveweightsinterval=80000
         self.sumofolder=folder
         self.sumofile=self.sumofolder + '/sumo-map.sumocfg'
@@ -54,12 +54,13 @@ class DQNAgent:
         self.setDefaultNumbers()   #To set action size and number of lanes
         self.model=None
         self.batch_size=32
-        self.actiontimeperiod=25
-        self.actionyellowperiod=7
+        self.actiontimeperiod=80
+        self.actionyellowperiod=15
         self.epoch=8000
-        self.yellowstatelength=5
-        self.interval=12
+
+
         self.mseplot=[]
+
         return
 
     def loadmodelweights(self,filename):
@@ -211,12 +212,16 @@ class DQNAgent:
          return
     def lossFunction(self,y_true,y_pred):
 
-         maxi=K.argmax(y_true) #ok
+         maxi=K.argmax(y_true,axis=-1) #ok
 
          #invert the axes
          y_pred = K.permute_dimensions(y_pred,(1,0))
 
          return K.mean((K.max(y_true,axis=-1) -(K.gather(y_pred,maxi)))**2)
+
+    def lossFunctionHuber(self,target,prediction):
+         error = prediction - target
+         return K.mean(K.sqrt(1+K.square(error))-1, axis=-1)
 
 
     def generateIntermediateAction(self,action1,action2):
@@ -258,7 +263,7 @@ class DQNAgent:
         return lanespeed,lanepos,vehct
     def starttraci(self):
 
-        cmd = ['sumo-gui', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
+        cmd = ['sumo', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
     def readConfigFile(self):
@@ -372,12 +377,12 @@ class DQNAgent:
         tempmodel=concatenate([model1_5,model2_5],axis=-1)
         tempmodel.shape
         finalemodel_1=concatenate([tempmodel,third_et_input],axis=-1)
-        finalemodel_2=Dense(512, activation='relu')(finalemodel_1)      #change values
-        finalemodel_3=Dense(256, activation='relu')(finalemodel_2)      #change values
+        finalemodel_2=Dense(128, activation='relu')(finalemodel_1)      #change values
+        finalemodel_3=Dense(64, activation='relu')(finalemodel_2)      #change values
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
-        final.compile(loss=self.lossFunction,optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
+        final.compile(loss='mean_squared_error' ,optimizer=RMSprop(lr=0.008),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -396,7 +401,7 @@ class DQNAgent:
          prvstate=curstate
          self.doActionMultipleTLS(traci,self.actionlist[curstate])
          sp,pos,w=a.getStateMatandWaittime(traci,a.lanelist,1)
-         self.time=5
+         self.time=self.actionyellowperiod
 
          plotx=[]
          wt=[]
@@ -406,7 +411,7 @@ class DQNAgent:
              traci.simulationStep()
 
 
-             if self.time%12==0 :
+             if self.time%self.actiontimeperiod==0 :
                   state={'input_1':pos,'input_2':sp,'input_3':self.generateActionArray(prvstate)}
                   #self.printd("doing yellow")
                   prvstate=curstate
@@ -425,13 +430,14 @@ class DQNAgent:
 
 
                   print "reward is " + str(reward)
-             if self.time%12==4 :
+             if self.time%self.actiontimeperiod==self.actionyellowperiod :
                   #self.printd("doing action")
                   self.doActionMultipleTLS(traci,self.actionlist[curstate])                                                #sets the current state after the yellow transition
 
              if self.time%self.learninterval ==0:
                   self.learn()
                   self.epsilon=self.epsilon-self.epsilon_decay
+                  #self.epsilon=0.1
                   print "epislion" +str(self.epsilon)
              if self.time%self.saveweightsinterval==0:
                   fg,(pl1,pl2)=plt.subplots(2,1)
@@ -450,7 +456,7 @@ class DQNAgent:
 
 
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
-a = DQNAgent('../sumo-map2')
+a = DQNAgent('../sumo-map3')
 
 a.starttraci()
 a.setDefaultNumbers()
@@ -459,5 +465,5 @@ a.loadFromDefaultFoldler()
 a.epsilon=.99
 a.run(traci)
 #a.learndummy()
-a.savemodel(self.sumofolder+'mdel.h5')
-a.savemodelweights(self.sumofolder+"mod.wt")
+a.savemodel(a.sumofolder+'mdel.h5')
+a.savemodelweights(a.sumofolder+"mod.wt")
