@@ -377,8 +377,8 @@ class DQNAgent:
         tempmodel=concatenate([model1_5,model2_5],axis=-1)
         tempmodel.shape
         finalemodel_1=concatenate([tempmodel,third_et_input],axis=-1)
-        finalemodel_2=Dense(128, activation='relu')(finalemodel_1)      #change values
-        finalemodel_3=Dense(64, activation='relu')(finalemodel_2)      #change values
+        finalemodel_2=Dense(512, activation='relu')(finalemodel_1)      #change values
+        finalemodel_3=Dense(256, activation='relu')(finalemodel_2)      #change values
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
