@@ -31,7 +31,7 @@ class DQNAgent:
         self.epsilon_min = 0.2
         self.learning_rate = 0.001
         self.debug = True
-        self.gamma = 0.05                             #discount factor
+        self.gamma = 0.5                             #discount factor
         #self.traci=traci
         self.avgvl=5
         self.learninterval=80000
@@ -54,8 +54,8 @@ class DQNAgent:
         self.setDefaultNumbers()   #To set action size and number of lanes
         self.model=None
         self.batch_size=32
-        self.actiontimeperiod=80
-        self.actionyellowperiod=15
+        self.actiontimeperiod=20
+        self.actionyellowperiod=5
         self.epoch=8000
 
 
@@ -206,18 +206,27 @@ class DQNAgent:
          targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=2,verbose=1)
+         self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
          mse=mean_squared_error(realrewards,calcrewards)
          self.mseplot.append(mse)
          return
     def lossFunction(self,y_true,y_pred):
+         print(y_true.shape)
+         teml=K.abs(y_true)
+         maxi=K.argmax(teml,axis=-1) #ok
+         #y_true=K.print_tensor(y_true,message='ytrue')
+         #maxi=K.print_tensor(maxi,message='maxi')
 
-         maxi=K.argmax(y_true,axis=-1) #ok
 
          #invert the axes
          y_pred = K.permute_dimensions(y_pred,(1,0))
-
-         return K.mean((K.max(y_true,axis=-1) -(K.gather(y_pred,maxi)))**2)
+         y_true = K.permute_dimensions(y_true,(1,0))
+         tem=K.gather(y_pred,maxi)
+         true_t=K.gather(y_true,maxi)
+         #tem=K.print_tensor(tem,message='tem')
+         #kmax=K.max(true_t,axis=-1)
+         #kmax=K.print_tensor(kmax,message='kmax')
+         return K.mean(((true_t) -(tem))**2)
 
     def lossFunctionHuber(self,target,prediction):
          error = prediction - target
@@ -263,7 +272,7 @@ class DQNAgent:
         return lanespeed,lanepos,vehct
     def starttraci(self):
 
-        cmd = ['sumo', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
+        cmd = ['sumo-gui', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
     def readConfigFile(self):
@@ -382,7 +391,7 @@ class DQNAgent:
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
-        final.compile(loss='mean_squared_error' ,optimizer=RMSprop(lr=0.008),metrics=['accuracy'])
+        final.compile(loss=self.lossFunction ,optimizer=RMSprop(lr=0.008),metrics=['accuracy'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -462,7 +471,7 @@ a.starttraci()
 a.setDefaultNumbers()
 #a.saveActionsandLanestoFile()
 a.loadFromDefaultFoldler()
-a.epsilon=.99
+a.epsilon=1
 a.run(traci)
 #a.learndummy()
 a.savemodel(a.sumofolder+'mdel.h5')
