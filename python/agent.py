@@ -272,7 +272,7 @@ class DQNAgent:
         return lanespeed,lanepos,vehct
     def starttraci(self):
 
-        cmd = ['sumo-gui', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
+        cmd = ['sumo', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
     def readConfigFile(self):
