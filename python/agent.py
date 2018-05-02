@@ -456,7 +456,7 @@ class DQNAgent:
                   print self.mseplot
                   self.savemodelweights(self.sumofolder+"/mod.wt")
                   print(self.history.history)
-                  plt.show()
+                  #plt.show()
              self.time=self.time+1
              tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
 
