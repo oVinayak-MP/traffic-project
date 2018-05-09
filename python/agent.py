@@ -12,6 +12,8 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D,MaxPooling2D
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from random import shuffle
+
 
 
 import os, sys
@@ -25,9 +27,9 @@ from tqdm import tqdm
 class DQNAgent:
     def __init__(self,folder):
 
-        self.memory = deque(maxlen=18000)     #max size of queue
+        self.memory = deque(maxlen=28000)     #max size of queue
         self.epsilon = 0.6                 #To check exploitive and exploration
-        self.epsilon_decay= 0.01
+        self.epsilon_decay= 0.001
         self.epsilon_min = 0.2
         self.learning_rate = 0.001
         self.debug = True
@@ -38,28 +40,28 @@ class DQNAgent:
         self.saveweightsinterval=80000
         self.sumofolder=folder
         self.sumofile=self.sumofolder + '/sumo-map.sumocfg'
-        self.tlsidlist=[]
-        self.tlssizelist=[]
+        self.tlsidlist=[]                  #will be loaded from a file
+        self.tlssizelist=[]                #Will be loaded from a file it consist of all corresponding substring for each traffic signal in the action string
         self.tlsnum=0
 
-        self.lanearrylength=50
+        self.lanearrylength=50             #number of cells in lane array ,this need to be changed depednding upon the average vehicle length adn lenght of the edge
         self.maxspeed=15
-        self.numlanes=0                    #Not yet used TODO use it inside the neural network
+        self.numlanes=0                    #number of lanes to be considered
         self.lanelist=[]#create a general function for it
 
-        self.actionlist=[]
-        self.actionsize=0
+        self.actionlist=[]                #will be loaded from file list all possiible actions
+        self.actionsize=0                 #will be loaded from file
         self.time=0
         self.history=0
         self.setDefaultNumbers()   #To set action size and number of lanes
-        self.model=None
-        self.batch_size=32
-        self.actiontimeperiod=20
-        self.actionyellowperiod=5
+        self.model=None           #will be loaded or created
+        self.batch_size=16
+        self.actiontimeperiod=20   #the time period after a new action will be selected
+        self.actionyellowperiod=5   #the time for yellow phase
         self.epoch=8000
 
 
-        self.mseplot=[]
+        self.mseplot=[]              #used to plot the graph
 
         return
 
@@ -82,24 +84,24 @@ class DQNAgent:
             print str
         return
 
-    def add(self,state,reward,nextaction,nextstate):        #remember
+    def add(self,state,reward,nextaction,nextstate):        #Adds the state into the deque
 
         self.memory.append((state,reward,nextaction,nextstate))
         return
 
-    def setDefaultNumbers(self):
+    def setDefaultNumbers(self):                               #calculates the default numbers
         self.numlanes=len(self.lanelist)
         self.actionsize=len(self.actionlist)
         return
 
-    def doAction(self,traci,idno,actionindex):                                              #to be obselete
+    def doAction(self,traci,idno,actionindex):                                              # obselete
          self.printd("action index is " + str(actionindex))
          traci.trafficlights.setRedYellowGreenState(idno, self.actionlist[actionindex])
          return
-    def doActionStr(self,traci,idno,strs):                                                    #to be obselete
+    def doActionStr(self,traci,idno,strs):                                                    # obselete
          traci.trafficlights.setRedYellowGreenState(idno,strs)
          return
-    def doActionMultipleTLS(self,traci,strin):
+    def doActionMultipleTLS(self,traci,strin):                                     #performs the action onto multiple traffic signals
          i=0
          p=0
          for tlsstr in self.tlsidlist:
@@ -171,7 +173,9 @@ class DQNAgent:
          targ1=[]
          realrewards=[]
          calcrewards=[]
-         for state,reward,action,nextstate in self.memory:
+         x = [[state,reward,action,nextstate] for state,reward,action,nextstate in self.memory]
+         shuffle(x)
+         for state,reward,action,nextstate in x:                          #creates a np array
 
                inp1.append(state['input_1'])
                inp2.append(state['input_2'])
@@ -190,7 +194,7 @@ class DQNAgent:
                nextreward=nextreward[0]
                nextreward=np.max(nextreward)
                print "current action " + str(action)
-               print "selected action" + str(temp)
+               print "selected action" + str(temp) +"with reward " +str(nextreward)
                temp=temparry[0][temp]
                targ[action]=reward +self.gamma*nextreward
                realrewards.append(reward)
@@ -206,11 +210,11 @@ class DQNAgent:
          targ1=np.array(targ1)
 
          inputs={'input_1':inp1,'input_2':inp2,'input_3':inp3}
-         self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)
+         self.history=self.model.fit(inputs,targ1,batch_size=self.batch_size,epochs=1,verbose=1)          #calling fit function for training
          mse=mean_squared_error(realrewards,calcrewards)
          self.mseplot.append(mse)
          return
-    def lossFunction(self,y_true,y_pred):
+    def lossFunction(self,y_true,y_pred):              #the loss function
          print(y_true.shape)
          teml=K.abs(y_true)
          maxi=K.argmax(teml,axis=-1) #ok
@@ -228,12 +232,12 @@ class DQNAgent:
          #kmax=K.print_tensor(kmax,message='kmax')
          return K.mean(((true_t) -(tem))**2)
 
-    def lossFunctionHuber(self,target,prediction):
+    def lossFunctionHuber(self,target,prediction):        #Another loss function not used
          error = prediction - target
          return K.mean(K.sqrt(1+K.square(error))-1, axis=-1)
 
 
-    def generateIntermediateAction(self,action1,action2):
+    def generateIntermediateAction(self,action1,action2):  #Gnerate the yellow action string
          lens=len(action1)
          temp=action1
          for i in range(0,lens):
@@ -270,12 +274,12 @@ class DQNAgent:
              print "number of vehicles:" + str(cnt) +"\n\n"
         lanespeed[:]=[round(x/self.maxspeed,2) for x in lanespeed]
         return lanespeed,lanepos,vehct
-    def starttraci(self):
+    def starttraci(self):                 #starts the emulator
 
         cmd = ['sumo', '-c', self.sumofile,'--waiting-time-memory','99999999','-e','500','--time-to-teleport','-5'] #set waiting time meory    maximum time change gui mode
         traci.start(cmd)
         return
-    def readConfigFile(self):
+    def readConfigFile(self):                #reads the number of traffic siganals and the length of their corr sction strings from file  tls.txt
          fil=self.sumofolder+'/tls.txt'
          f = open(fil,'r')
          self.tlsnum=int(f.readline().strip())
@@ -288,7 +292,7 @@ class DQNAgent:
          return
 
 
-    def getStateMatandWaittime(self,traci,lanelist,debug):
+    def getStateMatandWaittime(self,traci,lanelist,debug): #Reads the state matric from the emulator
         speedl=[]
         posl=[]
         wait=0;
@@ -308,7 +312,7 @@ class DQNAgent:
         if (debug >=1) :
              print "waiting time :"+str(wait)
         return speedl,posl,wait
-    def loadFromDefaultFoldler(self):
+    def loadFromDefaultFoldler(self):                              #Loads the files into the required variables
 
 
          if (os.path.exists(self.sumofolder+'/laneids.txt')):                        #loads the laneids file
@@ -347,7 +351,7 @@ class DQNAgent:
          print self.numlanes
          print self.actionsize
          return
-    def saveActionsandLanestoFile(self):
+    def saveActionsandLanestoFile(self):                                                  #save the information into corresponding files
          f = open(self.sumofolder+'/actions.txt', 'w')
          for s in self.actionlist:
               f.write(s+'\n')
@@ -369,12 +373,12 @@ class DQNAgent:
         first_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))    #size of matrix
         second_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))   #size of matrix
         third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
-        model1_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
-        model2_1=Conv2D(16, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
+        model1_1=Conv2D(32, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
+        model2_1=Conv2D(32, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
         model1_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model1_1)	#
         model2_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model2_1)
-        model1_3=Conv2D(32, (2, 2), activation='relu')(model1_2)
-        model2_3=Conv2D(32, (2, 2), activation='relu')(model2_2)
+        model1_3=Conv2D(64, (2, 2), activation='relu')(model1_2)
+        model2_3=Conv2D(64, (2, 2), activation='relu')(model2_2)
         model1_4=MaxPooling2D(pool_size=(2, 2), strides=(2, 2),padding='same')(model1_3)	#
         model2_4=MaxPooling2D(pool_size=(2, 2), strides=(2, 2),padding='same')(model2_3)	#
         model1_5=Flatten()(model1_4)
@@ -391,7 +395,7 @@ class DQNAgent:
         finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
-        final.compile(loss=self.lossFunction ,optimizer=RMSprop(lr=0.008),metrics=['accuracy'])
+        final.compile(loss=self.lossFunction ,optimizer=RMSprop(lr=0.00001),metrics=['accuracy','mse'])
         if self.debug == True:
             print ("The network model")
             final.summary()
@@ -403,7 +407,7 @@ class DQNAgent:
 
 
 
-    def run(self,traci):
+    def run(self,traci):     #runs the simulation and obtain the values from the simulation
          oldw=0
          print self.actionsize
          curstate=random.randrange(0,self.actionsize,1)
@@ -458,14 +462,14 @@ class DQNAgent:
                   print(self.history.history)
                   #plt.show()
              self.time=self.time+1
-             tt=tt+traci.simulation.getEndingTeleportNumber()                              #TODO also consider members teleported
+             tt=tt+traci.simulation.getEndingTeleportNumber()                              #not used since simulation does not teleport he vehicles
 
 
 
 
 
 np.set_printoptions(suppress=True,linewidth=np.nan,threshold=np.nan)
-a = DQNAgent('../sumo-map3')
+a = DQNAgent('../sumo-map4')
 
 a.starttraci()
 a.setDefaultNumbers()
