@@ -326,7 +326,7 @@ class DQNAgent:
               print "Unable to load laneids from file"
 
 
-         if (os.path.exists(self.sumofolder+'/actions.txt')):                       #loads the action file
+         if (os.path.exists(self.sumofolder+'/actions.txt')):   #loads the action file
               self.actionlist = []
               infile = open(self.sumofolder+'/actions.txt','r')
               for line in infile:
@@ -336,10 +336,10 @@ class DQNAgent:
               print "Model actions loaded from file"
          else:
               print "Unable to load actions from file"
-         self.readConfigFile()                                                              #reads the tls file
+         self.readConfigFile()                         #reads the tls file
          self.setDefaultNumbers()
-         self.create_model()                                                                #creates model
-         if (os.path.exists(self.sumofolder+'/model.h5') and False ):                       #change this to load model
+         self.create_model()             #creates model
+         if (os.path.exists(self.sumofolder+'/model.h5') and False ):       #change this to load model
              a.loadmodel(self.sumofolder+"/model.h5")
              print "Model Loaded from file"
          elif(os.path.exists(self.sumofolder+'/mod.wt')):
@@ -351,7 +351,7 @@ class DQNAgent:
          print self.numlanes
          print self.actionsize
          return
-    def saveActionsandLanestoFile(self):                                                  #save the information into corresponding files
+    def saveActionsandLanestoFile(self):           #save the information into corresponding files
          f = open(self.sumofolder+'/actions.txt', 'w')
          for s in self.actionlist:
               f.write(s+'\n')
@@ -372,7 +372,7 @@ class DQNAgent:
     def create_model(self):                          #creates the model using fumctional API
         first_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))    #size of matrix
         second_con_input = Input(shape=(self.numlanes ,self.lanearrylength,1))   #size of matrix
-        third_et_input = Input(shape=(self.actionsize,))         #TODO replace these predefined numbers  to class variables
+        third_et_input = Input(shape=(self.actionsize,))         #replace these predefined numbers  to class variables
         model1_1=Conv2D(32, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(first_con_input)
         model2_1=Conv2D(32, kernel_size=(4, 4), strides=(2, 2), activation='relu',data_format='channels_last',padding='same')(second_con_input)
         model1_2=MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(model1_1)	#
@@ -392,7 +392,7 @@ class DQNAgent:
         finalemodel_1=concatenate([tempmodel,third_et_input],axis=-1)
         finalemodel_2=Dense(512, activation='relu')(finalemodel_1)      #change values
         finalemodel_3=Dense(256, activation='relu')(finalemodel_2)      #change values
-        finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column TODO replace this with variables
+        finalmodel=Dense(self.actionsize, activation='linear')(finalemodel_3)     #output row and column 
         final=Model(inputs=[first_con_input,second_con_input,third_et_input],outputs=[finalmodel])
         #final.compile(loss='mean_squared_error',optimizer=RMSprop(lr=0.01),metrics=['accuracy'])
         final.compile(loss=self.lossFunction ,optimizer=RMSprop(lr=0.00001),metrics=['accuracy','mse'])
@@ -436,16 +436,15 @@ class DQNAgent:
                   oldw=w
                   plotx.append(reward)
                   wt.append(w)
-                  self.add(state,reward,prvstate,nextstate)                                         #add to the buffer the previous state its reward and action taken at that state
+                  self.add(state,reward,prvstate,nextstate) #add to the buffer the previous state its reward and action taken at that state
                   yellowaction=a.generateIntermediateAction(self.actionlist[prvstate],self.actionlist[curstate])
-                  #self.printd("yellow action is"+str(yellowaction))
-                  self.doActionMultipleTLS(traci,yellowaction)                                                #sets yellow state and calculates change cumulative delay for previous action
+                  self.doActionMultipleTLS(traci,yellowaction)     #sets yellow state and calculates change cumulative delay for previous action
 
 
                   print "reward is " + str(reward)
              if self.time%self.actiontimeperiod==self.actionyellowperiod :
                   #self.printd("doing action")
-                  self.doActionMultipleTLS(traci,self.actionlist[curstate])                                                #sets the current state after the yellow transition
+                  self.doActionMultipleTLS(traci,self.actionlist[curstate])  #sets the current state after the yellow transition
 
              if self.time%self.learninterval ==0:
                   self.learn()
@@ -462,7 +461,7 @@ class DQNAgent:
                   print(self.history.history)
                   #plt.show()
              self.time=self.time+1
-             tt=tt+traci.simulation.getEndingTeleportNumber()                              #not used since simulation does not teleport he vehicles
+             tt=tt+traci.simulation.getEndingTeleportNumber()   
 
 
 
@@ -473,10 +472,9 @@ a = DQNAgent('../sumo-map4')
 
 a.starttraci()
 a.setDefaultNumbers()
-#a.saveActionsandLanestoFile()
 a.loadFromDefaultFoldler()
+a.saveActionsandLanestoFile()
 a.epsilon=1
 a.run(traci)
-#a.learndummy()
 a.savemodel(a.sumofolder+'mdel.h5')
 a.savemodelweights(a.sumofolder+"mod.wt")
