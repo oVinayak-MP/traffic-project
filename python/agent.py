@@ -452,11 +452,11 @@ class DQNAgent:
                   #self.epsilon=0.1
                   print "epislion" +str(self.epsilon)
              if self.time%self.saveweightsinterval==0:
-                  fg,(pl1,pl2)=plt.subplots(2,1)
-                  pl1.plot(plotx)
-                  pl1.plot(wt)
-                  pl2.plot(self.mseplot)
-                  print self.mseplot
+                  #fg,(pl1,pl2)=plt.subplots(2,1)
+                  #pl1.plot(plotx)
+                  #pl1.plot(wt)
+                  #pl2.plot(self.mseplot)
+                  #sprint self.mseplot
                   self.savemodelweights(self.sumofolder+"/mod.wt")
                   print(self.history.history)
                   #plt.show()
